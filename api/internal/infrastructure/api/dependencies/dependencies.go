@@ -7,16 +7,19 @@ import (
 )
 
 type Dependencies struct {
-	LeagueHandler *handlers.LeagueHandler
-	AuthHandler   *handlers.AuthHandler
+	LeagueHandler       *handlers.LeagueHandler
+	LeagueMemberHandler *handlers.LeagueMemberHandler
+	AuthHandler         *handlers.AuthHandler
 }
 
 func BuildDependencies(
 	leagueService *leagues.LeagueService,
 	authService *application.AuthService,
+	leagueMemberService *leagues.LeagueMemberService,
 ) *Dependencies {
 	return &Dependencies{
-		LeagueHandler: handlers.NewLeagueHandler(leagueService),
-		AuthHandler:   handlers.NewAuthHandler(authService),
+		LeagueHandler:       handlers.NewLeagueHandler(leagueService),
+		LeagueMemberHandler: handlers.NewLeagueMemberHandler(leagueMemberService),
+		AuthHandler:         handlers.NewAuthHandler(authService),
 	}
 }

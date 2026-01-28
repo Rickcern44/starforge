@@ -65,11 +65,13 @@ func main() {
 func BuildApplication(db *gorm.DB) *dependencies.Dependencies {
 
 	leagueRepo := repositories.NewLeagueRepository(db)
+	leagueMemberRepo := repositories.NewLeagueMemberRepository(db)
 
 	leagueService := leagues.NewLeagueService(leagueRepo)
+	leagueMemberService := leagues.NewLeagueMemberService(leagueMemberRepo)
 	// Auth services
 	jwtService := application.NewJwtService(os.Getenv("JWT_TOKEN"))
 	authService := application.NewAuthService(jwtService, time.Hour*24)
 
-	return dependencies.BuildDependencies(leagueService, authService)
+	return dependencies.BuildDependencies(leagueService, authService, leagueMemberService)
 }

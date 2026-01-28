@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/bouncy/bouncy-api/internal/application/leagues"
-	"github.com/bouncy/bouncy-api/internal/domain/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,8 +19,8 @@ func RegisterLeagueRoutes(rg *gin.RouterGroup, handler *LeagueHandler) {
 	leagues := rg.Group("/league")
 
 	leagues.POST("", handler.CreateLeague)
-	leagues.GET("/:id", handler.GetLeague)
-	leagues.DELETE("/:id", handler.Delete)
+	leagues.GET("/:leagueId", handler.GetLeague)
+	leagues.DELETE("/:leagueId", handler.Delete)
 }
 
 func (h *LeagueHandler) GetLeague(c *gin.Context) {
@@ -59,31 +58,31 @@ func (h *LeagueHandler) CreateLeague(c *gin.Context) {
 	c.JSON(http.StatusCreated, league)
 }
 
-type addMemberRequest struct {
-	UserID string      `json:"userId"`
-	Role   models.Role `json:"role"`
-}
-
-func (h *LeagueHandler) AddMember(c *gin.Context) {
-	leagueId := c.Param("id")
-
-	var req addMemberRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	err := h.service.AddMember(leagueId, req.UserID, req.Role)
-	if err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, nil)
-}
+//type addMemberRequest struct {
+//	UserID string      `json:"userId"`
+//	Role   models.Role `json:"role"`
+//}
+//
+//func (h *LeagueHandler) AddMember(c *gin.Context) {
+//	leagueId := c.Param("leagueId")
+//
+//	var req addMemberRequest
+//	if err := c.ShouldBindJSON(&req); err != nil {
+//		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+//		return
+//	}
+//
+//	err := h.service.AddMember(leagueId, req.UserID, req.Role)
+//	if err != nil {
+//		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+//		return
+//	}
+//
+//	c.JSON(http.StatusCreated, nil)
+//}
 
 func (h *LeagueHandler) Delete(c *gin.Context) {
-	id := c.Param("id")
+	id := c.Param("leagueId")
 
 	if err := h.service.Delete(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

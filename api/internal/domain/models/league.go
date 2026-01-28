@@ -44,7 +44,6 @@ func (l *League) AddGame(gameId string) error {
 		CostInCents: 700,
 		IsCanceled:  false,
 		Attendance:  nil,
-		Payments:    nil,
 	})
 
 	return nil
