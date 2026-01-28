@@ -15,7 +15,7 @@ func LeagueToDomain(m persistence.League) models.League {
 		}
 	}
 
-	games := make([]models.Game, len(m.Games))
+	games := make([]*models.Game, len(m.Games))
 	for i, game := range m.Games {
 		games[i] = GameToDomain(game)
 	}

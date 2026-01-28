@@ -9,7 +9,9 @@ type LeagueRepository interface {
 }
 
 type GameRepository interface {
-	GetById(id string) (*models.Game, error)
-	Save(game *models.Game) error
-	Delete(id string) error
+	ListGamesByLeague(leagueId string) ([]*models.Game, error)
+	Create(game *models.Game) (*models.Game, error)
+	GetById(gameId string) (*models.Game, error)
+	Update(gameId string, game *models.Game) (*models.Game, error)
+	Cancel(gameId string) error
 }

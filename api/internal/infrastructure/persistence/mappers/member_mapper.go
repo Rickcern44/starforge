@@ -13,8 +13,8 @@ func LeagueMemberToDomain(m persistence.LeagueMember) models.LeagueMember {
 	}
 }
 
-func LeagueMemberToDto(m models.LeagueMember) persistence.LeagueMember {
-	return persistence.LeagueMember{
+func LeagueMemberToDto(m *models.LeagueMember) *persistence.LeagueMember {
+	return &persistence.LeagueMember{
 		UserID:   m.UserID,
 		Role:     m.Role,
 		JoinedAt: m.JoinedAt,

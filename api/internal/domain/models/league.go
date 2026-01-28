@@ -11,7 +11,7 @@ type League struct {
 	IsActive bool
 
 	Members []LeagueMember
-	Games   []Game
+	Games   []*Game
 }
 
 func (l *League) AddMember(userId string, role Role) error {
@@ -36,7 +36,7 @@ func (l *League) AddGame(gameId string) error {
 		}
 	}
 
-	l.Games = append(l.Games, Game{
+	l.Games = append(l.Games, &Game{
 		ID:          gameId,
 		LeagueID:    l.ID,
 		StartTime:   time.Now(),

@@ -15,4 +15,5 @@ func RegisterRoutes(
 	handlers.RegisterAuthRoutes(api, deps.AuthHandler)
 	handlers.RegisterLeagueRoutes(api, deps.LeagueHandler)
 	handlers.RegisterLeagueMemberHandlers(api, deps.LeagueMemberHandler)
+	handlers.RegisterGameRoutes(api, deps.GameHandler)
 }

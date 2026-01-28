@@ -24,7 +24,7 @@ func RegisterLeagueRoutes(rg *gin.RouterGroup, handler *LeagueHandler) {
 }
 
 func (h *LeagueHandler) GetLeague(c *gin.Context) {
-	id := c.Param("id")
+	id := c.Param("leagueId")
 
 	game, err := h.service.GetLeague(id)
 

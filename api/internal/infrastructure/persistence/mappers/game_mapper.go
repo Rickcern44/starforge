@@ -5,7 +5,7 @@ import (
 	"github.com/bouncy/bouncy-api/internal/infrastructure/persistence"
 )
 
-func GameToDomain(m persistence.Game) models.Game {
+func GameToDomain(m persistence.Game) *models.Game {
 	attendance := make([]models.GameAttendance, len(m.Attendance))
 	for i, a := range m.Attendance {
 		attendance[i] = models.GameAttendance{
@@ -15,7 +15,7 @@ func GameToDomain(m persistence.Game) models.Game {
 		}
 	}
 
-	return models.Game{
+	return &models.Game{
 		ID:          m.ID,
 		LeagueID:    m.LeagueID,
 		StartTime:   m.StartTime,
@@ -26,8 +26,21 @@ func GameToDomain(m persistence.Game) models.Game {
 	}
 }
 
-func GameToDto(d models.Game) models.Game {
-	return models.Game{
+func GameToPersistence(d *models.Game) *persistence.Game {
+	return &persistence.Game{
+		Base: persistence.Base{
+			ID: d.ID,
+		},
+		LeagueID:    d.LeagueID,
+		StartTime:   d.StartTime,
+		Location:    d.Location,
+		CostInCents: d.CostInCents,
+		IsCanceled:  d.IsCanceled,
+	}
+}
+
+func GameToDto(d *models.Game) *models.Game {
+	return &models.Game{
 		ID:          d.ID,
 		LeagueID:    d.LeagueID,
 		StartTime:   d.StartTime,

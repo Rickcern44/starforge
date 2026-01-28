@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/bouncy/bouncy-api/internal/application/leagues"
+	"github.com/bouncy/bouncy-api/internal/domain/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,7 +27,27 @@ func RegisterLeagueMemberHandlers(rg *gin.RouterGroup, handler *LeagueMemberHand
 
 func (h *LeagueMemberHandler) ListMembers(c *gin.Context) {}
 
-func (h *LeagueMemberHandler) AddMember(c *gin.Context) {}
+type AddMemberRequest struct {
+	userId       string      `json:"userId"`
+	addingUserId string      `json:"addingUserId"`
+	role         models.Role `json:"role"`
+}
+
+func (h *LeagueMemberHandler) AddMember(c *gin.Context) {
+	var request AddMemberRequest
+	leagueId := c.Param("leagueId")
+
+	if err := c.ShouldBind(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.service.AddMember(leagueId, request.addingUserId, request.userId, request.role); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+}
 
 func (h *LeagueMemberHandler) RemoveMember(c *gin.Context) {}
 

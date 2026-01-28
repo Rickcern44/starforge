@@ -28,9 +28,8 @@ func (l LeagueMemberRepository) ListByLeague(leagueID string) ([]models.LeagueMe
 	return members, nil
 }
 
-func (l LeagueMemberRepository) Add(member models.LeagueMember) error {
-	leagueMemberDto := mappers.LeagueMemberToDto(member)
-	return l.db.Create(&leagueMemberDto).Error
+func (l LeagueMemberRepository) Add(member *persistence.LeagueMember) error {
+	return l.db.Create(&member).Error
 }
 
 func (l LeagueMemberRepository) UpdateRole(leagueID, userID string, role models.Role) error {

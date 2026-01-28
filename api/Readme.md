@@ -13,17 +13,25 @@ Here is a list of suggested tasks to improve the codebase, categorized for clari
 -   **[Low] Remove Dead Code:** The `internal/infrastructure/api/handlers/league_handler.go` file contains commented-out code. This should be either implemented or removed to keep the codebase clean.
 
 ### Recommended Features & Updates
+
 -   **[High] Implement a Test Suite:** The project currently lacks automated tests. It is highly recommended to add unit tests for the application services and integration tests for the API endpoints to ensure code quality and prevent regressions.
 -   **[Medium] Introduce Structured Logging:** The current logging uses the standard `log` package, which is not ideal for production environments. Integrating a structured logging library like `slog`, `zerolog`, or `zap` would significantly improve log parsing and monitoring.
 -   **[Medium] Enhance API Documentation:** The project is set up with `swaggo` for Swagger documentation, but the annotations are minimal. Adding more detailed comments to the handlers will produce a more comprehensive and useful API specification.
 -   **[Medium] Implement Pagination:** For endpoints that can return a large number of items (e.g., a list of all leagues), pagination should be implemented to improve performance and usability.
 -   **[Low] Establish a CI/CD Pipeline:** A Continuous Integration/Continuous Deployment pipeline (e.g., using GitHub Actions) should be set up to automate testing, building, and deployment processes.
 
+#### Authentication System Enhancements
+To build a complete and secure authentication system, the following features are necessary:
+-   **[High] Implement User Registration:** Create a `POST /api/auth/register` endpoint. This handler should validate user input, check for existing users, and use a strong hashing algorithm (like `bcrypt`) to securely hash the password before saving the new user to the database.
+-   **[High] Implement Authentication Middleware:** Develop a Gin middleware to protect routes that require a logged-in user. This middleware should extract the JWT from the `Authorization` header, validate it, and then load the corresponding user's information into the request context.
+-   **[High] Create "Get Current User" Endpoint:** Add a `GET /api/users/me` endpoint, protected by the new auth middleware. This will allow a client application to retrieve the profile of the currently authenticated user.
+-   **[High] Update User Persistence Model:** The `User` model in the persistence layer needs a `PasswordHash` field to store the securely hashed password. The domain model should continue to omit this sensitive field.
+
 ---
 
 ## Code Structure
 
-This project follows a [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) pattern, which separates concerns and makes the application more modular, testable, and maintainable. The code is organized into the following main directories:
+This project follows a [Clean Architecture](https.blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) pattern, which separates concerns and makes the application more modular, testable, and maintainable. The code is organized into the following main directories:
 
 -   **/cmd/api**: The entry point of the application. The `main.go` file is responsible for initializing the server, database, dependencies, and starting the application.
 -   **/internal/domain**: This is the core of the application. It contains the business models and the interfaces that define the behavior of the outer layers (like repositories).
@@ -39,6 +47,53 @@ This project follows a [Clean Architecture](https://blog.cleancoder.com/uncle-bo
         -   **/repositories**: The concrete implementations of the repository interfaces.
         -   **/mappers**: Functions to map data between the domain models and the persistence models.
 -   **/bouncy.http**: A file containing HTTP requests for testing the API endpoints, likely for use with a tool like the JetBrains HTTP Client or a similar VS Code extension.
+
+---
+
+## Object Structure
+
+The core of the application is built around a few key data models. Understanding their relationships is key to understanding the application.
+
+-   **`League`**: This is the top-level object. It represents a single sports league and contains a list of `LeagueMembers` and `Games`.
+-   **`LeagueMember`**: This model connects a `User` to a `League` and defines their `Role` (e.g., Admin, User).
+-   **`Game`**: Represents a single game scheduled within a `League`. It includes details like the time, location, and cost. Each game has `GameAttendance` records.
+-   **`User`**: A global user of the application.
+-   **`GameAttendance`**: Tracks which `Users` have checked into a specific `Game`.
+-   **`GameCharge`**: Represents the cost owed by a `User` for participating in a `Game`. This is the financial record that needs to be settled.
+-   **`Payment`**: A record of a payment made by a `User`.
+-   **`PaymentAllocation`**: This is the link between a `Payment` and a `GameCharge`. It specifies how much of a payment is applied to a specific charge, allowing for many-to-many relationships between payments and charges.
+
+---
+
+## API Endpoints
+
+### Existing Endpoints
+
+-   `POST /api/auth/login`: Authenticate a user.
+-   `POST /api/league`: Create a new league.
+-   `GET /api/league/:leagueId`: Get a league by its ID.
+-   `DELETE /api/league/:leagueId`: Delete a league.
+-   `GET /api/league/:leagueId/members`: List all members of a league.
+-   `POST /api/league/:leagueId/members`: Add a new member to a league.
+-   `PATCH /api/league/:leagueId/members/:memberId`: Update a member's role.
+-   `DELETE /api/league/:leagueId/members/:memberId`: Remove a member from a league.
+
+### Endpoints to Add
+
+-   **League Member Endpoints**: The handlers for the league member endpoints are currently empty and need to be implemented.
+-   **Games**:
+    -   `GET /api/league/:leagueId/games`: List all games for a league.
+    -   `POST /api/league/:leagueId/games`: Create a new game for a league.
+    -   `GET /api/games/:gameId`: Get a specific game by its ID.
+    -   `PUT /api/games/:gameId`: Update a game's details.
+    -   `DELETE /api/games/:gameId`: Cancel a game.
+-   **Game Attendance**:
+    -   `POST /api/games/:gameId/attendance`: Mark a user as attending a game (check-in).
+    -   `DELETE /api/games/:gameId/attendance/:userId`: Remove a user's attendance.
+-   **Payments**:
+    -   `GET /api/league/:leagueId/payments`: List all payments for a league.
+    -   `POST /api/league/:leagueId/payments`: Record a new payment.
+    -   `POST /api/payments/:paymentId/allocations`: Allocate a payment to a game charge.
 
 ---
 

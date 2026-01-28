@@ -1,0 +1,116 @@
+@host = http://localhost:3000/api
+
+// --- Global Variables for Testing ---
+@leagueId = 019c04e3-9a69-7883-8eab-36008e6bcaa3
+@gameId = 019c027a-2338-7bfe-8bac-d0d1246346ab   // Replace with actual game ID
+@memberId = 019c027a-2338-7bfe-8bac-d0d1246346ab // Replace with actual member ID
+@paymentId = 019c027a-2338-7bfe-8bac-d0d1246346ab // Replace with actual payment ID
+
+### Auth:Login
+POST {{ host }}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test.user@gmail.com",
+  "password": "password"
+}
+
+### Leagues:Create
+POST {{ host }}/league
+Content-Type: application/json
+
+{
+  "name": "Thursday Night League"
+}
+
+### Leagues:GetById
+GET {{ host }}/league/{{leagueId}}
+
+### Leagues:Add Member
+POST {{ host }}/league/{{leagueId}}/members
+Content-Type: application/json
+
+{
+  "userId": "{{$random.uuid}}",
+  "role": "user"
+}
+
+### Leagues:List Members
+GET {{ host }}/league/{{leagueId}}/members
+
+### Leagues:Update Member Role
+PATCH {{ host }}/league/{{leagueId}}/members/{{memberId}}
+Content-Type: application/json
+
+{
+  "role": "admin"
+}
+
+### Leagues:Remove Member
+DELETE {{ host }}/league/{{leagueId}}/members/{{memberId}}
+
+### Leagues:Delete
+DELETE {{ host }}/league/{{leagueId}}
+
+### Games:List For League
+GET {{ host }}/league/{{leagueId}}/games
+
+### Games:Create For League
+POST {{ host }}/league/{{leagueId}}/games
+Content-Type: application/json
+
+{
+  "location": "Local Park",
+  "costInCents": 500
+}
+
+### Games:Get By ID
+GET {{ host }}/games/{{gameId}}
+
+### Games:Update
+PUT {{ host }}/games/{{gameId}}
+Content-Type: application/json
+
+{
+  "location": "New Community Center",
+  "costInCents": 600,
+  "isCanceled": false
+}
+
+### Games:Cancel
+DELETE {{ host }}/games/{{gameId}}
+
+### Game Attendance:Mark User Attending
+POST {{ host }}/games/{{gameId}}/attendance
+Content-Type: application/json
+
+{
+  "userId": "{{$random.uuid}}",
+  "checkedIn": true
+}
+
+### Game Attendance:Remove User Attendance
+DELETE {{ host }}/games/{{gameId}}/attendance/{{memberId}}
+
+### Payments:List For League
+GET {{ host }}/league/{{leagueId}}/payments
+
+### Payments:Record New Payment
+POST {{ host }}/league/{{leagueId}}/payments
+Content-Type: application/json
+
+{
+  "userId": "{{$random.uuid}}",
+  "amountCents": 1000,
+  "method": "venmo",
+  "reference": "Payment for April games"
+}
+
+### Payments:Allocate to Game Charge
+POST {{ host }}/payments/{{paymentId}}/allocations
+Content-Type: application/json
+
+{
+  "gameChargeId": "{{$random.uuid}}",
+  "amountCents": 500
+}
