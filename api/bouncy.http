@@ -1,0 +1,35 @@
+@host = http://localhost:3000/api
+
+
+### Auth:Login
+POST {{ host }}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test.user@gmail.com",
+  "password": "password"
+}
+
+
+### Leagues:Create
+POST {{ host }}/league
+Content-Type: application/json
+
+{
+  "name": "test-league-three"
+}
+
+### Leagues:GetById
+GET {{ host }}/league/019bffe4-7012-71a2-abb7-dc9c16591917
+
+### Leauges:Add Member
+POST {{ host }}/league/019bffe4-7012-71a2-abb7-dc9c16591917/member
+Content-Type: application/json
+
+{
+  "userId": "{{$random.uuid}}",
+  "roles": "user"
+}
+
+### Leagues:Delete
+DELETE {{ host }}/league/019c027a-2338-7bfe-8bac-d0d1246346ab

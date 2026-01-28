@@ -1,4 +1,4 @@
-package application
+package leagues
 
 import (
 	"context"
@@ -39,7 +39,7 @@ func (ls *LeagueService) CreateLeague(ctx context.Context, name string) (*models
 	return league, nil
 }
 
-func (ls *LeagueService) AddMember(leagueId, userId, role string) error {
+func (ls *LeagueService) AddMember(leagueId, userId string, role models.Role) error {
 	league, err := ls.leagueRepo.GetById(leagueId)
 
 	if err != nil {
@@ -55,4 +55,12 @@ func (ls *LeagueService) AddMember(leagueId, userId, role string) error {
 	}
 
 	return ls.leagueRepo.Save(league)
+}
+
+func (ls *LeagueService) AddGame(leagueId, userId, role string) error {
+	return nil
+}
+
+func (ls *LeagueService) Delete(leagueId string) error {
+	return ls.leagueRepo.Delete(leagueId)
 }

@@ -1,18 +1,18 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
-	"github.com/bouncy/bouncy-api/internal/application"
+	"github.com/bouncy/bouncy-api/internal/application/leagues"
+	"github.com/bouncy/bouncy-api/internal/domain/models"
 	"github.com/gin-gonic/gin"
 )
 
 type LeagueHandler struct {
-	service *application.LeagueService
+	service *leagues.LeagueService
 }
 
-func NewLeagueHandler(service *application.LeagueService) *LeagueHandler {
+func NewLeagueHandler(service *leagues.LeagueService) *LeagueHandler {
 	return &LeagueHandler{service: service}
 }
 
@@ -21,6 +21,7 @@ func RegisterLeagueRoutes(rg *gin.RouterGroup, handler *LeagueHandler) {
 
 	leagues.POST("", handler.CreateLeague)
 	leagues.GET("/:id", handler.GetLeague)
+	leagues.DELETE("/:id", handler.Delete)
 }
 
 func (h *LeagueHandler) GetLeague(c *gin.Context) {
@@ -59,24 +60,35 @@ func (h *LeagueHandler) CreateLeague(c *gin.Context) {
 }
 
 type addMemberRequest struct {
-	UserID string `json:"userId"`
-	Role   string `json:"role"`
+	UserID string      `json:"userId"`
+	Role   models.Role `json:"role"`
 }
 
-func (h *LeagueHandler) AddMember(w http.ResponseWriter, r *http.Request) {
-	leagueID := r.PathValue("id")
+func (h *LeagueHandler) AddMember(c *gin.Context) {
+	leagueId := c.Param("id")
 
 	var req addMemberRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err := h.service.AddMember(leagueID, req.UserID, req.Role)
+	err := h.service.AddMember(leagueId, req.UserID, req.Role)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	c.JSON(http.StatusCreated, nil)
+}
+
+func (h *LeagueHandler) Delete(c *gin.Context) {
+	id := c.Param("id")
+
+	if err := h.service.Delete(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, nil)
 }

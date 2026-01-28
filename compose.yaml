@@ -12,19 +12,8 @@ services:
       - pg_data:/var/lib/postgresql/docker
     networks:
       - local_network
-
-  vault:
-    image: hashicorp/vault:latest
-    ports:
-      - "8200:8200"
-    volumes:
-      - vault_data:/vault/file
-    networks:
-      - local_network
 volumes:
-  keycloak_data:
   pg_data:
-  vault_data:
 
 networks:
   local_network:

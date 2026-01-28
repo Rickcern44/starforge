@@ -15,19 +15,6 @@ func GameToDomain(m persistence.Game) models.Game {
 		}
 	}
 
-	payments := make([]models.GamePayment, len(m.Payments))
-	for i, p := range m.Payments {
-		payments[i] = models.GamePayment{
-			ID:          p.ID,
-			UserID:      p.UserID,
-			AmountCents: p.AmountCents,
-			Method:      models.PaymentMethod(p.Method),
-			Status:      models.PaymentStatus(p.Status),
-			PaidAt:      p.PaidAt,
-			ConfirmedBy: p.ConfirmedBy,
-		}
-	}
-
 	return models.Game{
 		ID:          m.ID,
 		LeagueID:    m.LeagueID,
@@ -36,11 +23,10 @@ func GameToDomain(m persistence.Game) models.Game {
 		CostInCents: m.CostInCents,
 		IsCanceled:  m.IsCanceled,
 		Attendance:  attendance,
-		Payments:    payments,
 	}
 }
 
-func GameFromDomain(d models.Game) models.Game {
+func GameToDto(d models.Game) models.Game {
 	return models.Game{
 		ID:          d.ID,
 		LeagueID:    d.LeagueID,

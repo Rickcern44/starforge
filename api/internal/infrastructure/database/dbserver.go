@@ -43,17 +43,20 @@ func (dbs *Service) Connect() error {
 }
 
 func (dbs *Service) UpdateDatabase() error {
+	fmt.Println("Updating database...")
 	err := dbs.Database.AutoMigrate(
 		&persistence.League{},
 		&persistence.LeagueMember{},
 		&persistence.Game{},
 		&persistence.GameAttendance{},
-		&persistence.GamePayment{},
+		&persistence.Payment{},
+		&persistence.PaymentAllocation{},
+		&persistence.GameCharge{},
 	)
 
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("database schema has been updated")
 	return nil
 }

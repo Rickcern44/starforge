@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bouncy/bouncy-api/internal/application"
+	"github.com/bouncy/bouncy-api/internal/application/leagues"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/dependencies"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/routes"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/server"
@@ -19,6 +20,9 @@ import (
 	"gorm.io/gorm"
 )
 
+// @title 		Bouncy API
+// @version 	1.0
+
 func main() {
 	ginServer := server.NewServer()
 	dbServer := database.NewDatabaseService()
@@ -26,6 +30,8 @@ func main() {
 	if err := dbServer.Connect(); err != nil {
 		log.Fatal(err)
 	}
+
+	_ = dbServer.UpdateDatabase()
 
 	deps := BuildApplication(dbServer.Database)
 	routes.RegisterRoutes(ginServer.Engine(), deps)
@@ -60,7 +66,10 @@ func BuildApplication(db *gorm.DB) *dependencies.Dependencies {
 
 	leagueRepo := repositories.NewLeagueRepository(db)
 
-	leagueService := application.NewLeagueService(leagueRepo)
+	leagueService := leagues.NewLeagueService(leagueRepo)
+	// Auth services
+	jwtService := application.NewJwtService(os.Getenv("JWT_TOKEN"))
+	authService := application.NewAuthService(jwtService, time.Hour*24)
 
-	return dependencies.BuildDependencies(leagueService)
+	return dependencies.BuildDependencies(leagueService, authService)
 }

@@ -11,6 +11,7 @@ func RegisterRoutes(
 	deps *dependencies.Dependencies,
 ) {
 	api := engine.Group("/api")
-	
+
 	handlers.RegisterLeagueRoutes(api, deps.LeagueHandler)
+	handlers.RegisterAuthRoutes(api, deps.AuthHandler)
 }
