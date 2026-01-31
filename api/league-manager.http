@@ -1,8 +1,8 @@
 @host = http://localhost:3000/api
 
 // --- Global Variables for Testing ---
-@leagueId = 019c04e3-9a69-7883-8eab-36008e6bcaa3
-@gameId = 019c027a-2338-7bfe-8bac-d0d1246346ab   // Replace with actual game ID
+@leagueId = 019c13d2-e9c4-797a-bf1d-50fcef48df4b
+@gameId = 019c027a-2338-7bfe-8bac-d0d1246346ab    // Replace with actual game ID
 @memberId = 019c027a-2338-7bfe-8bac-d0d1246346ab // Replace with actual member ID
 @paymentId = 019c027a-2338-7bfe-8bac-d0d1246346ab // Replace with actual payment ID
 

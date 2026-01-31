@@ -23,6 +23,8 @@ func (s *LeagueMemberService) AddMember(leagueID, addingUserId, userId string, r
 	leagueMember := models.CreateLeagueMember(userId, role)
 	memberDto := mappers.LeagueMemberToDto(leagueMember)
 
+	memberDto.LeagueID = leagueID
+
 	return s.repo.Add(memberDto)
 }
 

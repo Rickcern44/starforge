@@ -1,10 +1,11 @@
 package handlers
 
 import (
+	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 
 	"github.com/bouncy/bouncy-api/internal/application"
-	"github.com/gin-gonic/gin"
 )
 
 type AuthHandler struct {
@@ -17,11 +18,8 @@ func NewAuthHandler(service *application.AuthService) *AuthHandler {
 	}
 }
 
-func RegisterAuthRoutes(rg *gin.RouterGroup, handler *AuthHandler) {
-	authGroup := rg.Group("/auth")
-
-	authGroup.POST("/login")
-
+func RegisterAuthRoutes(r chi.Router, handler *AuthHandler) {
+	r.Post("/auth/login", handler.LoginHandler)
 }
 
 type LoginRequest struct {
@@ -48,18 +46,18 @@ type ErrorResponse struct {
 // @Success      200 {object} handlers.LoginResponse
 // @Failure      401 {object} ErrorResponse
 // @Router       /api/auth/login [post]
-func (h AuthHandler) LoginHandler(c *gin.Context) {
+func (h AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var request LoginRequest
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	token, err := h.service.Login(request.Email, request.Password)
-
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		writeJSON(w, http.StatusUnauthorized, ErrorResponse{Error: err.Error()})
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token, "token_type": "Bearer"})
+	writeJSON(w, http.StatusOK, LoginResponse{Token: token, TokenType: "Bearer"})
 }

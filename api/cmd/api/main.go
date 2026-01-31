@@ -24,7 +24,7 @@ import (
 // @version 	1.0
 
 func main() {
-	ginServer := server.NewServer()
+	chiServer := server.NewServer()
 	dbServer := database.NewDatabaseService()
 
 	if err := dbServer.Connect(); err != nil {
@@ -34,12 +34,12 @@ func main() {
 	_ = dbServer.UpdateDatabase()
 
 	deps := BuildApplication(dbServer.Database)
-	routes.RegisterRoutes(ginServer.Engine(), deps)
+	routes.RegisterRoutes(chiServer.Router(), deps)
 
 	// Start server in a goroutine
 	go func() {
 		log.Println("Starting Server on :3000")
-		if err := ginServer.Start(":3000"); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := chiServer.Start(":3000"); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
 		}
 	}()
@@ -55,7 +55,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := ginServer.Shutdown(ctx); err != nil {
+	if err := chiServer.Shutdown(ctx); err != nil {
 		log.Fatalf("Server Shutdown Failed:%+v", err)
 	}
 

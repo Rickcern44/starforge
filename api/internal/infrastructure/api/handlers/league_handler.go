@@ -1,10 +1,11 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/bouncy/bouncy-api/internal/application/leagues"
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 )
 
 type LeagueHandler struct {
@@ -15,79 +16,54 @@ func NewLeagueHandler(service *leagues.LeagueService) *LeagueHandler {
 	return &LeagueHandler{service: service}
 }
 
-func RegisterLeagueRoutes(rg *gin.RouterGroup, handler *LeagueHandler) {
-	leagues := rg.Group("/league")
-
-	leagues.POST("", handler.CreateLeague)
-	leagues.GET("/:leagueId", handler.GetLeague)
-	leagues.DELETE("/:leagueId", handler.Delete)
+func RegisterLeagueRoutes(r chi.Router, handler *LeagueHandler) {
+	r.Post("/league", handler.CreateLeague)
+	r.Get("/league/{leagueId}", handler.GetLeague)
+	r.Delete("/league/{leagueId}", handler.Delete)
 }
 
-func (h *LeagueHandler) GetLeague(c *gin.Context) {
-	id := c.Param("leagueId")
+func (h *LeagueHandler) GetLeague(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "leagueId")
 
 	game, err := h.service.GetLeague(id)
-
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		return
 	}
 
-	c.JSON(http.StatusOK, game)
+	writeJSON(w, http.StatusOK, game)
 }
 
 type createLeagueRequest struct {
-	Name string `json:"name" binding:"required,min=3"`
+	Name string `json:"name"`
 }
 
-func (h *LeagueHandler) CreateLeague(c *gin.Context) {
+func (h *LeagueHandler) CreateLeague(w http.ResponseWriter, r *http.Request) {
 	var req createLeagueRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	league, err := h.service.CreateLeague(
-		c.Request.Context(),
+		r.Context(),
 		req.Name,
 	)
 	if err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		writeJSON(w, http.StatusConflict, ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, league)
+	writeJSON(w, http.StatusCreated, league)
 }
 
-//type addMemberRequest struct {
-//	UserID string      `json:"userId"`
-//	Role   models.Role `json:"role"`
-//}
-//
-//func (h *LeagueHandler) AddMember(c *gin.Context) {
-//	leagueId := c.Param("leagueId")
-//
-//	var req addMemberRequest
-//	if err := c.ShouldBindJSON(&req); err != nil {
-//		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	err := h.service.AddMember(leagueId, req.UserID, req.Role)
-//	if err != nil {
-//		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	c.JSON(http.StatusCreated, nil)
-//}
-
-func (h *LeagueHandler) Delete(c *gin.Context) {
-	id := c.Param("leagueId")
+func (h *LeagueHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "leagueId")
 
 	if err := h.service.Delete(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, nil)
+	w.WriteHeader(http.StatusOK)
 }

@@ -23,7 +23,7 @@ Here is a list of suggested tasks to improve the codebase, categorized for clari
 #### Authentication System Enhancements
 To build a complete and secure authentication system, the following features are necessary:
 -   **[High] Implement User Registration:** Create a `POST /api/auth/register` endpoint. This handler should validate user input, check for existing users, and use a strong hashing algorithm (like `bcrypt`) to securely hash the password before saving the new user to the database.
--   **[High] Implement Authentication Middleware:** Develop a Gin middleware to protect routes that require a logged-in user. This middleware should extract the JWT from the `Authorization` header, validate it, and then load the corresponding user's information into the request context.
+-   **[High] Implement Authentication Middleware:** Develop a Chi middleware to protect routes that require a logged-in user. This middleware should extract the JWT from the `Authorization` header, validate it, and then load the corresponding user's information into the request context.
 -   **[High] Create "Get Current User" Endpoint:** Add a `GET /api/users/me` endpoint, protected by the new auth middleware. This will allow a client application to retrieve the profile of the currently authenticated user.
 -   **[High] Update User Persistence Model:** The `User` model in the persistence layer needs a `PasswordHash` field to store the securely hashed password. The domain model should continue to omit this sensitive field.
 
@@ -42,7 +42,7 @@ This project follows a [Clean Architecture](https.blog.cleancoder.com/uncle-bob/
     -   **/api**: Contains everything related to the web API, including:
         -   **/handlers**: The HTTP handlers that receive requests, call the appropriate application services, and return responses.
         -   **/routes**: The definition of the API routes.
-        -   **/server**: The web server configuration and setup (using Gin).
+        -   **/server**: The web server configuration and setup (using Chi).
     -   **/persistence**: The implementation of the repository interfaces defined in the domain layer. This is where the data is actually persisted to the database (using GORM).
         -   **/repositories**: The concrete implementations of the repository interfaces.
         -   **/mappers**: Functions to map data between the domain models and the persistence models.
@@ -173,16 +173,16 @@ Add a new handler function in the `GameHandler` to process the incoming HTTP req
 ```go
 // (Assuming you have a GameHandler struct similar to LeagueHandler)
 
-func (h *GameHandler) GetGamesForLeague(c *gin.Context) {
-    leagueID := c.Param("leagueId") // Make sure this matches the route param
+func (h *GameHandler) GetGamesForLeague(w http.ResponseWriter, r *http.Request) {
+    leagueID := chi.URLParam(r, "leagueId") // Make sure this matches the route param
 
     games, err := h.service.GetGamesForLeague(leagueID)
     if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch games for the league"})
+        writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Could not fetch games for the league"})
         return
     }
 
-    c.JSON(http.StatusOK, games)
+    writeJSON(w, http.StatusOK, games)
 }
 ```
 
@@ -191,7 +191,7 @@ Now, register the new route and connect it to the handler. A good place for this
 
 **File:** `internal/infrastructure/api/handlers/game_handler.go`
 ```go
-func RegisterGameRoutes(rg *gin.RouterGroup, handler *GameHandler) {
+func RegisterGameRoutes(r chi.Router, handler *GameHandler) {
 	games := rg.Group("/games")
 	// ... other game routes
 }
@@ -199,16 +199,18 @@ func RegisterGameRoutes(rg *gin.RouterGroup, handler *GameHandler) {
 **File:** `internal/infrastructure/api/routes/routes.go`
 ```go
 func RegisterRoutes(
-	engine *gin.Engine,
+	router *chi.Mux,
 	deps *dependencies.Dependencies,
 ) {
-	api := engine.Group("/api")
+	router.Route("/api", func(r chi.Router) {
 
 	// ... other route registrations
 
 	// Register a sub-route on leagues
-	leagues := api.Group("/leagues")
-	leagues.GET("/:leagueId/games", deps.GameHandler.GetGamesForLeague) // Add the new route here
+	r.Route("/leagues", func(r chi.Router) {
+		r.GET("/:leagueId/games", deps.GameHandler.GetGamesForLeague) // Add the new route here
+	})
+	})
 }
 ```
 *Note: This approach assumes a `GameHandler` is added to your dependencies. You might choose to add this route under the `/leagues` group or create a new top-level `/games` group depending on your API design.*
@@ -257,7 +259,7 @@ func BuildApplication(db *gorm.DB) *dependencies.Dependencies {
 func main() {
     // ...
     deps := BuildApplication(dbServer.Database)
-	routes.RegisterRoutes(ginServer.Engine(), deps) // Make sure your RegisterRoutes wires everything up
+	routes.RegisterRoutes(chiServer.Router(), deps) // Make sure your RegisterRoutes wires everything up
     // ...
 }
 ```

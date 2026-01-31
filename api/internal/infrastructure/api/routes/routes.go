@@ -3,17 +3,17 @@ package routes
 import (
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/dependencies"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/handlers"
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 )
 
 func RegisterRoutes(
-	engine *gin.Engine,
+	router *chi.Mux,
 	deps *dependencies.Dependencies,
 ) {
-	api := engine.Group("/api")
-
-	handlers.RegisterAuthRoutes(api, deps.AuthHandler)
-	handlers.RegisterLeagueRoutes(api, deps.LeagueHandler)
-	handlers.RegisterLeagueMemberHandlers(api, deps.LeagueMemberHandler)
-	handlers.RegisterGameRoutes(api, deps.GameHandler)
+	router.Route("/api", func(r chi.Router) {
+		handlers.RegisterAuthRoutes(r, deps.AuthHandler)
+		handlers.RegisterLeagueRoutes(r, deps.LeagueHandler)
+		handlers.RegisterLeagueMemberHandlers(r, deps.LeagueMemberHandler)
+		handlers.RegisterGameRoutes(r, deps.GameHandler)
+	})
 }
