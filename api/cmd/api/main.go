@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/dependencies"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/routes"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/server"
+	"github.com/bouncy/bouncy-api/internal/infrastructure/config"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/database"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/persistence/repositories"
 	"gorm.io/gorm"
@@ -24,8 +26,15 @@ import (
 // @version 	1.0
 
 func main() {
+	var settings *config.Config
+	settings, err := config.LoadConfig(os.Getenv("APP_CONFIG_PATH"))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	chiServer := server.NewServer()
-	dbServer := database.NewDatabaseService()
+	dbServer := database.NewDatabaseService(settings)
 
 	if err := dbServer.Connect(); err != nil {
 		log.Fatal(err)
@@ -38,8 +47,9 @@ func main() {
 
 	// Start server in a goroutine
 	go func() {
-		log.Println("Starting Server on :3000")
-		if err := chiServer.Start(":3000"); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		port := fmt.Sprintf(":%v", settings.Server.Port)
+		log.Printf("Starting Server on %s", port)
+		if err := chiServer.Start(port); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
 		}
 	}()
@@ -67,13 +77,14 @@ func BuildApplication(db *gorm.DB) *dependencies.Dependencies {
 	leagueRepo := repositories.NewLeagueRepository(db)
 	leagueMemberRepo := repositories.NewLeagueMemberRepository(db)
 	gameRepo := repositories.NewGameRepository(db)
+	authRepo := repositories.NewAuthRepository(db)
 
 	leagueService := leagues.NewLeagueService(leagueRepo)
 	leagueMemberService := leagues.NewLeagueMemberService(leagueMemberRepo)
 	gameService := application.NewGameService(gameRepo)
 	// Auth services
 	jwtService := application.NewJwtService(os.Getenv("JWT_TOKEN"))
-	authService := application.NewAuthService(jwtService, time.Hour*24)
+	authService := application.NewAuthService(jwtService, authRepo)
 
-	return dependencies.BuildDependencies(leagueService, authService, leagueMemberService, gameService)
+	return dependencies.BuildDependencies(leagueService, authService, leagueMemberService, gameService, jwtService)
 }

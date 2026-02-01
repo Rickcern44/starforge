@@ -7,7 +7,7 @@ import (
 
 func LeagueMemberToDomain(m persistence.LeagueMember) models.LeagueMember {
 	return models.LeagueMember{
-		UserID:   m.UserID,
+		PlayerID: m.UserID,
 		Role:     m.Role,
 		JoinedAt: m.JoinedAt,
 	}
@@ -15,7 +15,7 @@ func LeagueMemberToDomain(m persistence.LeagueMember) models.LeagueMember {
 
 func LeagueMemberToDto(m *models.LeagueMember) *persistence.LeagueMember {
 	return &persistence.LeagueMember{
-		UserID:   m.UserID,
+		UserID:   m.PlayerID,
 		Role:     m.Role,
 		JoinedAt: m.JoinedAt,
 	}

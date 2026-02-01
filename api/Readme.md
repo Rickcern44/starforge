@@ -37,10 +37,10 @@ This project follows a [Clean Architecture](https.blog.cleancoder.com/uncle-bob/
 -   **/internal/domain**: This is the core of the application. It contains the business models and the interfaces that define the behavior of the outer layers (like repositories).
     -   **/models**: Contains the core data structures (e.g., `League`, `Game`).
     -   **/interfaces**: Defines the contracts for repositories that the application layer will use.
--   **/internal/application**: Contains the application-specific business logic. Each service orchestrates the flow of data and calls the domain interfaces to perform operations.
+-   **/internal/application**: Contains the application-specific business logic. Each service orchestrates the flow of data and calls the domain interfaces to perform operations. This layer can have subdirectories to organize services by domain (e.g., `/internal/application/leagues`, `/internal/application/games`).
 -   **/internal/infrastructure**: This layer contains the implementation details for external concerns, such as the database, the web server, and other third-party services.
     -   **/api**: Contains everything related to the web API, including:
-        -   **/handlers**: The HTTP handlers that receive requests, call the appropriate application services, and return responses.
+        -   **/handlers**: The HTTP handlers that receive requests, call the appropriate application services, and return responses. This directory also contains `json.go` which provides a generic helper for writing JSON responses.
         -   **/routes**: The definition of the API routes.
         -   **/server**: The web server configuration and setup (using Chi).
     -   **/persistence**: The implementation of the repository interfaces defined in the domain layer. This is where the data is actually persisted to the database (using GORM).
@@ -171,7 +171,7 @@ Add a new handler function in the `GameHandler` to process the incoming HTTP req
 
 **File:** `internal/infrastructure/api/handlers/game_handler.go`
 ```go
-// (Assuming you have a GameHandler struct similar to LeagueHandler)
+
 
 func (h *GameHandler) GetGamesForLeague(w http.ResponseWriter, r *http.Request) {
     leagueID := chi.URLParam(r, "leagueId") // Make sure this matches the route param
@@ -192,7 +192,7 @@ Now, register the new route and connect it to the handler. A good place for this
 **File:** `internal/infrastructure/api/handlers/game_handler.go`
 ```go
 func RegisterGameRoutes(r chi.Router, handler *GameHandler) {
-	games := rg.Group("/games")
+	games := r.Group("/games")
 	// ... other game routes
 }
 ```

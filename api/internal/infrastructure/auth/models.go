@@ -5,3 +5,6 @@ type Claims struct {
 	Email  string   `json:"email"`
 	Roles  []string `json:"roles"`
 }
+
+type User struct {
+}

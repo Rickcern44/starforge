@@ -27,11 +27,11 @@ func (h *LeagueHandler) GetLeague(w http.ResponseWriter, r *http.Request) {
 
 	game, err := h.service.GetLeague(id)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	writeJSON(w, http.StatusOK, game)
+	WriteJSON(w, http.StatusOK, game)
 }
 
 type createLeagueRequest struct {
@@ -41,7 +41,7 @@ type createLeagueRequest struct {
 func (h *LeagueHandler) CreateLeague(w http.ResponseWriter, r *http.Request) {
 	var req createLeagueRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -50,18 +50,18 @@ func (h *LeagueHandler) CreateLeague(w http.ResponseWriter, r *http.Request) {
 		req.Name,
 	)
 	if err != nil {
-		writeJSON(w, http.StatusConflict, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusConflict, ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, league)
+	WriteJSON(w, http.StatusCreated, league)
 }
 
 func (h *LeagueHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "leagueId")
 
 	if err := h.service.Delete(id); err != nil {
-		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 		return
 	}
 

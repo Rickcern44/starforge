@@ -14,17 +14,15 @@ type League struct {
 	Games   []*Game
 }
 
-func (l *League) AddMember(userId string, role Role) error {
+func (l *League) AddMember(playerId string, role Role) error {
 	for _, m := range l.Members {
-		if m.UserID == userId {
+		if m.PlayerID == playerId {
 			return errors.New("user already in league")
 		}
 	}
 
-	l.Members = append(l.Members, LeagueMember{
-		UserID: userId,
-		Role:   role,
-	})
+	member := CreateLeagueMember(l.ID, playerId, role)
+	l.Members = append(l.Members, *member)
 
 	return nil
 }

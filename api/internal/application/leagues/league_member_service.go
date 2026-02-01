@@ -20,7 +20,7 @@ func (s *LeagueMemberService) ListMembers(leagueId string) ([]models.LeagueMembe
 
 func (s *LeagueMemberService) AddMember(leagueID, addingUserId, userId string, role models.Role) error {
 	//TODO: Add an admin check before allowing the user to add the member to the league
-	leagueMember := models.CreateLeagueMember(userId, role)
+	leagueMember := models.CreateLeagueMember(leagueID, userId, role)
 	memberDto := mappers.LeagueMemberToDto(leagueMember)
 
 	memberDto.LeagueID = leagueID

@@ -1,0 +1,11 @@
+[server]
+port = 3000
+
+[database]
+host = "postgres.internal"
+port = "5432"
+username = "admin"
+database = "bouncy"
+
+[auth]
+jwt_ttl = 60

@@ -3,14 +3,16 @@ package models
 import "time"
 
 type LeagueMember struct {
-	UserID   string
+	LeagueID string
+	PlayerID string
 	Role     Role
 	JoinedAt time.Time
 }
 
-func CreateLeagueMember(userId string, role Role) *LeagueMember {
+func CreateLeagueMember(leagueID, playerID string, role Role) *LeagueMember {
 	return &LeagueMember{
-		UserID:   userId,
+		LeagueID: leagueID,
+		PlayerID: playerID,
 		Role:     role,
 		JoinedAt: time.Now(),
 	}

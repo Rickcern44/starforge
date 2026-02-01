@@ -2,8 +2,8 @@ package database
 
 import (
 	"fmt"
-	"os"
 
+	"github.com/bouncy/bouncy-api/internal/infrastructure/config"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/persistence"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -18,13 +18,13 @@ type Service struct {
 	Database *gorm.DB
 }
 
-func NewDatabaseService() *Service {
+func NewDatabaseService(settings *config.Config) *Service {
 	return &Service{
-		host:   os.Getenv("POSTGRES_HOST"),
-		port:   os.Getenv("POSTGRES_PORT"),
-		user:   os.Getenv("POSTGRES_USER"),
-		pass:   os.Getenv("POSTGRES_PASS"),
-		dbName: os.Getenv("POSTGRES_DB"),
+		host:   settings.Database.Host,
+		port:   settings.Database.Port,
+		user:   settings.Database.Username,
+		pass:   settings.Database.Password,
+		dbName: settings.Database.Database,
 	}
 }
 
@@ -45,6 +45,7 @@ func (dbs *Service) Connect() error {
 func (dbs *Service) UpdateDatabase() error {
 	fmt.Println("Updating database...")
 	err := dbs.Database.AutoMigrate(
+		&persistence.User{},
 		&persistence.League{},
 		&persistence.LeagueMember{},
 		&persistence.Game{},

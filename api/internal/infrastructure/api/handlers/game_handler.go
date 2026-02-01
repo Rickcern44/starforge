@@ -29,11 +29,11 @@ func (h *GameHandler) ListGames(w http.ResponseWriter, r *http.Request) {
 
 	games, err := h.service.GetGamesForLeague(leagueId)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	writeJSON(w, http.StatusOK, games)
+	WriteJSON(w, http.StatusOK, games)
 }
 
 func (h *GameHandler) GetGame(w http.ResponseWriter, r *http.Request) {
@@ -41,11 +41,11 @@ func (h *GameHandler) GetGame(w http.ResponseWriter, r *http.Request) {
 
 	game, err := h.service.GetGameById(gameId)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	writeJSON(w, http.StatusOK, game)
+	WriteJSON(w, http.StatusOK, game)
 }
 
 type CreateGameRequest struct {
@@ -58,7 +58,7 @@ func (h *GameHandler) AddGame(w http.ResponseWriter, r *http.Request) {
 
 	var req CreateGameRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -66,20 +66,20 @@ func (h *GameHandler) AddGame(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.service.Create(game)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	writeJSON(w, http.StatusOK, result)
+	WriteJSON(w, http.StatusOK, result)
 }
 
 func (h *GameHandler) CancelGame(w http.ResponseWriter, r *http.Request) {
 	gameId := chi.URLParam(r, "gameId")
 
 	if err := h.service.CancelGame(gameId); err != nil {
-		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{})
+	WriteJSON(w, http.StatusOK, map[string]interface{}{})
 }

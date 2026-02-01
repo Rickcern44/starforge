@@ -29,11 +29,11 @@ func (h *LeagueMemberHandler) ListMembers(w http.ResponseWriter, r *http.Request
 
 	members, err := h.service.ListMembers(leagueId)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	writeJSON(w, http.StatusOK, members)
+	WriteJSON(w, http.StatusOK, members)
 }
 
 type AddMemberRequest struct {
@@ -47,12 +47,12 @@ func (h *LeagueMemberHandler) AddMember(w http.ResponseWriter, r *http.Request) 
 	leagueId := chi.URLParam(r, "leagueId")
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	if err := h.service.AddMember(leagueId, request.AddingUserId, request.UserId, request.Role); err != nil {
-		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -65,7 +65,7 @@ func (h *LeagueMemberHandler) RemoveMember(w http.ResponseWriter, r *http.Reques
 	// For actual implementation, you'd likely get the `removingUserId` from context
 
 	if err := h.service.RemoveMember(leagueId, memberId); err != nil {
-		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -83,12 +83,12 @@ func (h *LeagueMemberHandler) UpdateRole(w http.ResponseWriter, r *http.Request)
 
 	var request UpdateMemberRoleRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	if err := h.service.UpdateRole(leagueId, memberId, request.Role); err != nil {
-		writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 		return
 	}
 

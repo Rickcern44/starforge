@@ -55,7 +55,7 @@ func (lr *LeagueRepository) Save(league *models.League) error {
 		for _, m := range league.Members {
 			member := persistence.LeagueMember{
 				LeagueID: league.ID,
-				UserID:   m.UserID,
+				UserID:   m.PlayerID,
 				Role:     m.Role,
 				JoinedAt: m.JoinedAt,
 			}

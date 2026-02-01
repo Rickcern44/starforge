@@ -46,15 +46,25 @@ func (s JwtService) Validate(tokenString string) (*auth.Claims, error) {
 	}
 
 	claimsMap, ok := token.Claims.(jwt.MapClaims)
-
 	if !ok {
 		return nil, errors.New("invalid claims")
 	}
 
-	rolesSlice := strings.Split(claimsMap["roles"].(string), ",")
+	var roles []string
+	if rawRoles, ok := claimsMap["roles"].([]interface{}); ok {
+		for _, r := range rawRoles {
+			if roleStr, isString := r.(string); isString {
+				roles = append(roles, roleStr)
+			}
+		}
+	} else if roleStr, ok := claimsMap["roles"].(string); ok {
+		// Fallback for comma-separated string if it was somehow stored this way
+		roles = strings.Split(roleStr, ",")
+	}
+
 	return &auth.Claims{
 		UserId: claimsMap["sub"].(string),
 		Email:  claimsMap["email"].(string),
-		Roles:  rolesSlice,
+		Roles:  roles, // Assign the correctly parsed roles
 	}, nil
 }
