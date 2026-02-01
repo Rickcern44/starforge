@@ -15,15 +15,23 @@ func NewAuthRepository(db *gorm.DB) *AuthRepository {
 	return &AuthRepository{db: db}
 }
 
-func (r *AuthRepository) GetUserByEmail(email string) (*models.Player, error) {
+func (r *AuthRepository) GetUserByEmail(email string) (*models.User, error) {
 	var user persistence.User // Use persistence model for query
 	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
 		return nil, err
 	}
-	return mappers.UserToDomain(user), nil // Convert to domain model before returning
+	return mappers.UserToDomain(user), nil
 }
 
-func (r *AuthRepository) CreateUser(user *models.Player) error {
-	persistenceUser := mappers.UserToPersistence(user) // Convert domain model to persistence model
+func (r *AuthRepository) CreateUser(user *models.User) error {
+	persistenceUser := mappers.UserToPersistence(user)
 	return r.db.Create(persistenceUser).Error
+}
+
+func (r *AuthRepository) GetUserByID(id string) (*models.User, error) {
+	var user persistence.User
+	if err := r.db.Where("id = ?", id).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return mappers.UserToDomain(user), nil
 }

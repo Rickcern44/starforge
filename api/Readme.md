@@ -7,25 +7,21 @@ This document provides an overview of the Bouncy API project, its structure, and
 Here is a list of suggested tasks to improve the codebase, categorized for clarity.
 
 ### Code Smells & Refactoring Opportunities
--   **[High] Adhere to Dependency Inversion Principle:** Services in the `application` layer currently depend on concrete repository implementations from the `infrastructure/persistence` layer. They should instead depend on the repository *interfaces* defined in `internal/domain/interfaces`.
--   **[High] Fix Inconsistent Route Parameter Names:** There are inconsistencies between route definitions and their handlers. For example, in `internal/infrastructure/api/handlers/league_handler.go`, the route is defined with `/:leagueId` but the handler reads `c.Param("id")`. This is a bug and should be fixed across the application.
--   **[Medium] Centralize Configuration:** Configuration values, especially secrets like the `JWT_TOKEN`, are read directly from environment variables within the business logic. It would be better to use a dedicated configuration struct, populated at startup, to make configuration management more robust and explicit.
--   **[Low] Remove Dead Code:** The `internal/infrastructure/api/handlers/league_handler.go` file contains commented-out code. This should be either implemented or removed to keep the codebase clean.
+-   **[High] Adhere to Dependency Inversion Principle:** Services in the `application` layer currently depend on concrete repository implementations from the `infrastructure/persistence` layer. They should instead depend on the repository *interfaces* defined in `internal/domain/interfaces`. (Status: Some services adhere, others violate or partially violate)
+-   **[Medium] Centralize Configuration:** Configuration values, especially secrets like the `JWT_TOKEN`, are read directly from environment variables within the business logic. It would be better to use a dedicated configuration struct, populated at startup, to make configuration management more robust and explicit. (Status: Partially centralized, `main.go` still directly accesses `os.Getenv("JWT_TOKEN")`)
 
 ### Recommended Features & Updates
 
 -   **[High] Implement a Test Suite:** The project currently lacks automated tests. It is highly recommended to add unit tests for the application services and integration tests for the API endpoints to ensure code quality and prevent regressions.
--   **[Medium] Introduce Structured Logging:** The current logging uses the standard `log` package, which is not ideal for production environments. Integrating a structured logging library like `slog`, `zerolog`, or `zap` would significantly improve log parsing and monitoring.
+-   **[Medium] Introduce Structured Logging:** The current logging uses the standard `log` package in `main.go`. Integrating a structured logging library like `slog` throughout the application would significantly improve log parsing and monitoring. (Status: `slog` used in `WriteJSON`, but `main.go` still uses standard `log`)
 -   **[Medium] Enhance API Documentation:** The project is set up with `swaggo` for Swagger documentation, but the annotations are minimal. Adding more detailed comments to the handlers will produce a more comprehensive and useful API specification.
 -   **[Medium] Implement Pagination:** For endpoints that can return a large number of items (e.g., a list of all leagues), pagination should be implemented to improve performance and usability.
 -   **[Low] Establish a CI/CD Pipeline:** A Continuous Integration/Continuous Deployment pipeline (e.g., using GitHub Actions) should be set up to automate testing, building, and deployment processes.
 
 #### Authentication System Enhancements
 To build a complete and secure authentication system, the following features are necessary:
--   **[High] Implement User Registration:** Create a `POST /api/auth/register` endpoint. This handler should validate user input, check for existing users, and use a strong hashing algorithm (like `bcrypt`) to securely hash the password before saving the new user to the database.
--   **[High] Implement Authentication Middleware:** Develop a Chi middleware to protect routes that require a logged-in user. This middleware should extract the JWT from the `Authorization` header, validate it, and then load the corresponding user's information into the request context.
--   **[High] Create "Get Current User" Endpoint:** Add a `GET /api/users/me` endpoint, protected by the new auth middleware. This will allow a client application to retrieve the profile of the currently authenticated user.
--   **[High] Update User Persistence Model:** The `User` model in the persistence layer needs a `PasswordHash` field to store the securely hashed password. The domain model should continue to omit this sensitive field.
+-   **[High] Create "Get Current User" Endpoint:** Add a `GET /api/users/me` endpoint, protected by the new auth middleware. This will allow a client application to retrieve the profile of the currently authenticated user. (Status: Completed)
+-   **[High] Update User Persistence Model:** The `User` model in the persistence layer needs a `PasswordHash` field to store the securely hashed password. The domain model should continue to omit this sensitive field. (Status: Persistence model correct, domain model `User` currently includes `PasswordHash` which contradicts the intent to omit it from the domain model; needs refactoring to use a DTO or separate domain model without `PasswordHash`.)
 
 ---
 
@@ -69,7 +65,9 @@ The core of the application is built around a few key data models. Understanding
 
 ### Existing Endpoints
 
--   `POST /api/auth/login`: Authenticate a user.
+-   `POST /api/v1/auth/login`: Authenticate a user.
+-   `POST /api/v1/auth/register`: Register a new user.
+-   `GET /api/users/me`: Get the profile of the currently authenticated user.
 -   `POST /api/league`: Create a new league.
 -   `GET /api/league/:leagueId`: Get a league by its ID.
 -   `DELETE /api/league/:leagueId`: Delete a league.
@@ -77,23 +75,20 @@ The core of the application is built around a few key data models. Understanding
 -   `POST /api/league/:leagueId/members`: Add a new member to a league.
 -   `PATCH /api/league/:leagueId/members/:memberId`: Update a member's role.
 -   `DELETE /api/league/:leagueId/members/:memberId`: Remove a member from a league.
+-   `GET /api/league/:leagueId/games`: List all games for a league.
+-   `POST /api/league/:leagueId/games`: Create a new game for a league.
+-   `GET /api/game/:gameId`: Get a specific game by its ID.
+-   `PUT /api/game/:gameId`: Update a game's details.
+-   `DELETE /api/game/:gameId`: Cancel a game.
+-   `POST /api/game/:gameId/attendance`: Mark a user as attending a game (check-in).
+-   `DELETE /api/game/:gameId/attendance/:userId`: Remove a user's attendance.
+-   `GET /api/league/:leagueId/payments`: List all payments for a league.
+-   `POST /api/league/:leagueId/payments`: Record a new payment.
+-   `POST /api/payments/:paymentId/allocations`: Allocate a payment to a game charge.
 
 ### Endpoints to Add
 
--   **League Member Endpoints**: The handlers for the league member endpoints are currently empty and need to be implemented.
--   **Games**:
-    -   `GET /api/league/:leagueId/games`: List all games for a league.
-    -   `POST /api/league/:leagueId/games`: Create a new game for a league.
-    -   `GET /api/games/:gameId`: Get a specific game by its ID.
-    -   `PUT /api/games/:gameId`: Update a game's details.
-    -   `DELETE /api/games/:gameId`: Cancel a game.
--   **Game Attendance**:
-    -   `POST /api/games/:gameId/attendance`: Mark a user as attending a game (check-in).
-    -   `DELETE /api/games/:gameId/attendance/:userId`: Remove a user's attendance.
--   **Payments**:
-    -   `GET /api/league/:leagueId/payments`: List all payments for a league.
-    -   `POST /api/league/:leagueId/payments`: Record a new payment.
-    -   `POST /api/payments/:paymentId/allocations`: Allocate a payment to a game charge.
+-   No additional endpoints currently planned.
 
 ---
 

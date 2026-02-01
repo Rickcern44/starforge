@@ -6,6 +6,8 @@ import (
 
 	"github.com/bouncy/bouncy-api/internal/application"
 	"github.com/bouncy/bouncy-api/internal/domain/models"
+	"github.com/bouncy/bouncy-api/internal/infrastructure/api/contract"
+	"github.com/bouncy/bouncy-api/internal/infrastructure/utils"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -21,7 +23,28 @@ func RegisterGameRoutes(r chi.Router, handler *GameHandler) {
 	r.Get("/league/{leagueId}/games", handler.ListGames)
 	r.Post("/league/{leagueId}/games", handler.AddGame)
 	r.Get("/game/{gameId}", handler.GetGame)
+	r.Put("/game/{gameId}", handler.UpdateGame)
 	r.Delete("/game/{gameId}", handler.CancelGame)
+}
+
+func (h *GameHandler) UpdateGame(w http.ResponseWriter, r *http.Request) {
+	gameId := chi.URLParam(r, "gameId")
+
+	var game models.Game
+	if err := json.NewDecoder(r.Body).Decode(&game); err != nil {
+		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	game.ID = gameId
+
+	updatedGame, err := h.service.UpdateGame(&game)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, updatedGame)
 }
 
 func (h *GameHandler) ListGames(w http.ResponseWriter, r *http.Request) {
@@ -29,11 +52,11 @@ func (h *GameHandler) ListGames(w http.ResponseWriter, r *http.Request) {
 
 	games, err := h.service.GetGamesForLeague(leagueId)
 	if err != nil {
-		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	WriteJSON(w, http.StatusOK, games)
+	utils.WriteJSON(w, http.StatusOK, games)
 }
 
 func (h *GameHandler) GetGame(w http.ResponseWriter, r *http.Request) {
@@ -41,11 +64,11 @@ func (h *GameHandler) GetGame(w http.ResponseWriter, r *http.Request) {
 
 	game, err := h.service.GetGameById(gameId)
 	if err != nil {
-		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	WriteJSON(w, http.StatusOK, game)
+	utils.WriteJSON(w, http.StatusOK, game)
 }
 
 type CreateGameRequest struct {
@@ -58,7 +81,7 @@ func (h *GameHandler) AddGame(w http.ResponseWriter, r *http.Request) {
 
 	var req CreateGameRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		WriteJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -66,20 +89,20 @@ func (h *GameHandler) AddGame(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.service.Create(game)
 	if err != nil {
-		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	WriteJSON(w, http.StatusOK, result)
+	utils.WriteJSON(w, http.StatusOK, result)
 }
 
 func (h *GameHandler) CancelGame(w http.ResponseWriter, r *http.Request) {
 	gameId := chi.URLParam(r, "gameId")
 
 	if err := h.service.CancelGame(gameId); err != nil {
-		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	WriteJSON(w, http.StatusOK, map[string]interface{}{})
+	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{})
 }

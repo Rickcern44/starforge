@@ -5,9 +5,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-
 	"github.com/bouncy/bouncy-api/internal/application"
+	"github.com/bouncy/bouncy-api/internal/infrastructure/api/contract"
+	"github.com/bouncy/bouncy-api/internal/infrastructure/utils"
+	"github.com/go-chi/chi/v5"
 )
 
 type AuthHandler struct {
@@ -35,28 +36,24 @@ type LoginResponse struct {
 	TokenType string `json:"token_type"`
 }
 
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
-
 func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var request LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		WriteJSON(w, http.StatusBadRequest, ErrorResponse{Error: "Invalid request body"})
+		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: "Invalid request body"})
 		return
 	}
 
 	token, err := h.service.Login(request.Email, request.Password)
 	if err != nil {
 		if errors.Is(err, application.ErrUserNotFound) || errors.Is(err, application.ErrInvalidCredentials) {
-			WriteJSON(w, http.StatusUnauthorized, ErrorResponse{Error: "Invalid email or password"})
+			utils.WriteJSON(w, http.StatusUnauthorized, contract.ErrorResponse{Error: "Invalid email or password"})
 			return
 		}
-		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "An internal error occurred"})
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: "An internal error occurred"})
 		return
 	}
 
-	WriteJSON(w, http.StatusOK, LoginResponse{Token: token, TokenType: "Bearer"})
+	utils.WriteJSON(w, http.StatusOK, LoginResponse{Token: token, TokenType: "Bearer"})
 }
 
 type registrationRequest struct {
@@ -72,26 +69,26 @@ type registrationResponse struct {
 func (h *AuthHandler) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	var request registrationRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		WriteJSON(w, http.StatusBadRequest, ErrorResponse{Error: "Invalid request body"})
+		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: "Invalid request body"})
 		return
 	}
 
 	err := h.service.Register(request.Name, request.Email, request.Password)
 	if err != nil {
 		if errors.Is(err, application.ErrUserAlreadyExists) {
-			WriteJSON(w, http.StatusConflict, ErrorResponse{Error: err.Error()})
+			utils.WriteJSON(w, http.StatusConflict, contract.ErrorResponse{Error: err.Error()})
 			return
 		}
 		// Catch validation errors
 		if err.Error() == "invalid email address" || err.Error() == "password must be at least 8 characters" {
-			WriteJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+			utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: err.Error()})
 			return
 		}
 
 		// For any other error, return a generic internal server error
-		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "An internal error occurred"})
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: "An internal error occurred"})
 		return
 	}
 
-	WriteJSON(w, http.StatusCreated, registrationResponse{Message: "User registered successfully"})
+	utils.WriteJSON(w, http.StatusCreated, registrationResponse{Message: "User registered successfully"})
 }

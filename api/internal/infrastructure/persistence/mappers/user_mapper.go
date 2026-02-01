@@ -5,8 +5,8 @@ import (
 	"github.com/bouncy/bouncy-api/internal/infrastructure/persistence"
 )
 
-func UserToDomain(p persistence.User) *models.Player {
-	return &models.Player{
+func UserToDomain(p persistence.User) *models.User {
+	return &models.User{
 		ID:           p.ID,
 		Email:        p.Email,
 		Name:         p.Name,
@@ -15,7 +15,7 @@ func UserToDomain(p persistence.User) *models.Player {
 	}
 }
 
-func UserToPersistence(d *models.Player) *persistence.User {
+func UserToPersistence(d *models.User) *persistence.User {
 	return &persistence.User{
 		Base: persistence.Base{
 			ID:        d.ID,

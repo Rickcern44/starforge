@@ -3,13 +3,14 @@ package models
 import "time"
 
 type Payment struct {
-	ID          string
-	UserID      string
-	AmountCents int
-	Method      PaymentMethod
-	ReceivedAt  time.Time
-	RecordedBy  string  // Admin ID
-	Reference   *string // Venmo note / spreadsheet row
+	ID            string
+	UserID        string
+	LeagueID      string
+	AmountInCents int
+	Method        PaymentMethod
+	ReceivedAt    time.Time
+	RecordedBy    string  // Admin ID
+	Reference     *string // Venmo note / spreadsheet row
 
 	Allocations []PaymentAllocation
 }
@@ -17,7 +18,7 @@ type Payment struct {
 func (p Payment) UnallocatedAmount() int {
 	allocated := 0
 	for _, a := range p.Allocations {
-		allocated += a.AmountCents
+		allocated += a.AmountInCents
 	}
-	return p.AmountCents - allocated
+	return p.AmountInCents - allocated
 }

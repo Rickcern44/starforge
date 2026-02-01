@@ -12,7 +12,10 @@ import (
 	"time"
 
 	"github.com/bouncy/bouncy-api/internal/application"
+	"github.com/bouncy/bouncy-api/internal/application/game_attendances"
 	"github.com/bouncy/bouncy-api/internal/application/leagues"
+	"github.com/bouncy/bouncy-api/internal/application/payments"
+	"github.com/bouncy/bouncy-api/internal/application/users"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/dependencies"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/routes"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/server"
@@ -42,7 +45,7 @@ func main() {
 
 	_ = dbServer.UpdateDatabase()
 
-	deps := BuildApplication(dbServer.Database)
+	deps := BuildApplication(dbServer.Database, settings)
 	routes.RegisterRoutes(chiServer.Router(), deps)
 
 	// Start server in a goroutine
@@ -72,19 +75,24 @@ func main() {
 	log.Println("Server exited properly")
 }
 
-func BuildApplication(db *gorm.DB) *dependencies.Dependencies {
+func BuildApplication(db *gorm.DB, settings *config.Config) *dependencies.Dependencies {
 
 	leagueRepo := repositories.NewLeagueRepository(db)
 	leagueMemberRepo := repositories.NewLeagueMemberRepository(db)
 	gameRepo := repositories.NewGameRepository(db)
 	authRepo := repositories.NewAuthRepository(db)
+	gameAttendanceRepo := repositories.NewGameAttendanceRepository(db)
+	paymentsRepo := repositories.NewPaymentsRepository(db)
 
 	leagueService := leagues.NewLeagueService(leagueRepo)
 	leagueMemberService := leagues.NewLeagueMemberService(leagueMemberRepo)
 	gameService := application.NewGameService(gameRepo)
+	userService := users.NewUserService(authRepo)
+	gameAttendanceService := game_attendances.NewGameAttendanceService(gameAttendanceRepo)
+	paymentsService := payments.NewPaymentsService(paymentsRepo)
 	// Auth services
-	jwtService := application.NewJwtService(os.Getenv("JWT_TOKEN"))
+	jwtService := application.NewJwtService(settings.Auth.JwtSecret)
 	authService := application.NewAuthService(jwtService, authRepo)
 
-	return dependencies.BuildDependencies(leagueService, authService, leagueMemberService, gameService, jwtService)
+	return dependencies.BuildDependencies(leagueService, authService, leagueMemberService, gameService, jwtService, userService, gameAttendanceService, paymentsService)
 }

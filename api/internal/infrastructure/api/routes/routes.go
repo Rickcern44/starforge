@@ -5,6 +5,7 @@ import (
 
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/dependencies"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/handlers"
+	"github.com/bouncy/bouncy-api/internal/infrastructure/api/middleware"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -24,6 +25,13 @@ func RegisterRoutes(
 			handlers.RegisterLeagueRoutes(r, deps.LeagueHandler)
 			handlers.RegisterLeagueMemberHandlers(r, deps.LeagueMemberHandler)
 			handlers.RegisterGameRoutes(r, deps.GameHandler)
+			handlers.RegisterUserRoutes(r, deps.UserHandler)
+			handlers.RegisterGameAttendanceRoutes(r, deps.GameAttendanceHandler)
+
+			r.Group(func(r chi.Router) {
+				r.Use(middleware.RoleMiddleware("admin"))
+				handlers.RegisterPaymentsRoutes(r, deps.PaymentsHandler)
+			})
 		})
 	})
 }

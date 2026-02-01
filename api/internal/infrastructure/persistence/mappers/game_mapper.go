@@ -9,9 +9,11 @@ func GameToDomain(m persistence.Game) *models.Game {
 	attendance := make([]models.GameAttendance, len(m.Attendance))
 	for i, a := range m.Attendance {
 		attendance[i] = models.GameAttendance{
-			UserID:    a.UserID,
-			CheckedIn: a.CheckedIn,
-			CreatedAt: a.CreatedAt,
+			UserID:         a.UserID,
+			CheckedIn:      a.CheckedIn,
+			CheckInComment: a.CheckInComments,
+			CreatedAt:      a.CreatedAt,
+			UpdatedAt:      a.UpdatedAt,
 		}
 	}
 

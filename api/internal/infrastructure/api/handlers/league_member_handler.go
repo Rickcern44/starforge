@@ -6,6 +6,8 @@ import (
 
 	"github.com/bouncy/bouncy-api/internal/application/leagues"
 	"github.com/bouncy/bouncy-api/internal/domain/models"
+	"github.com/bouncy/bouncy-api/internal/infrastructure/api/contract"
+	"github.com/bouncy/bouncy-api/internal/infrastructure/utils"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -29,11 +31,11 @@ func (h *LeagueMemberHandler) ListMembers(w http.ResponseWriter, r *http.Request
 
 	members, err := h.service.ListMembers(leagueId)
 	if err != nil {
-		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	WriteJSON(w, http.StatusOK, members)
+	utils.WriteJSON(w, http.StatusOK, members)
 }
 
 type AddMemberRequest struct {
@@ -47,12 +49,12 @@ func (h *LeagueMemberHandler) AddMember(w http.ResponseWriter, r *http.Request) 
 	leagueId := chi.URLParam(r, "leagueId")
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		WriteJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	if err := h.service.AddMember(leagueId, request.AddingUserId, request.UserId, request.Role); err != nil {
-		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -65,7 +67,7 @@ func (h *LeagueMemberHandler) RemoveMember(w http.ResponseWriter, r *http.Reques
 	// For actual implementation, you'd likely get the `removingUserId` from context
 
 	if err := h.service.RemoveMember(leagueId, memberId); err != nil {
-		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -83,12 +85,12 @@ func (h *LeagueMemberHandler) UpdateRole(w http.ResponseWriter, r *http.Request)
 
 	var request UpdateMemberRoleRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		WriteJSON(w, http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	if err := h.service.UpdateRole(leagueId, memberId, request.Role); err != nil {
-		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 

@@ -2,10 +2,11 @@ package models
 
 import "time"
 
-type Player struct {
+type User struct {
 	ID           string    `json:"id"`
 	Email        string    `json:"email"`
 	Name         string    `json:"name"`
 	PasswordHash string    `json:"-"`
+	Roles        []string  `json:"roles"`
 	CreatedAt    time.Time `json:"created_at"`
 }

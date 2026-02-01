@@ -69,7 +69,7 @@ func (s *AuthService) Register(name, email, password string) error {
 		return errors.New("internal server error")
 	}
 
-	newUser := &models.Player{
+	newUser := &models.User{
 		ID:           uuid.NewString(),
 		Name:         name,
 		Email:        email,

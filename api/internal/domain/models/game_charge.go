@@ -14,7 +14,7 @@ type GameCharge struct {
 func (c GameCharge) IsPaid() bool {
 	paid := 0
 	for _, a := range c.Allocations {
-		paid += a.AmountCents
+		paid += a.AmountInCents
 	}
 	return paid >= c.AmountCents
 }

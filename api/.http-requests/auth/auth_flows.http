@@ -1,0 +1,57 @@
+@api_host = http://localhost:8080
+@admin_email = admin@example.com
+@admin_password = password123
+@user_email = user@example.com
+@user_password = password123
+@admin_token =
+@user_token =
+
+### Register Admin User
+POST {{api_host}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "Admin User",
+  "email": "{{admin_email}}",
+  "password": "{{admin_password}}"
+}
+
+### Login Admin User
+POST {{api_host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{admin_email}}",
+  "password": "{{admin_password}}"
+}
+
+@admin_token = {{response.body.token}}
+
+### Register Regular User
+POST {{api_host}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "Regular User",
+  "email": "{{user_email}}",
+  "password": "{{user_password}}"
+}
+
+### Login Regular User
+POST {{api_host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{user_email}}",
+  "password": "{{user_password}}"
+}
+
+@user_token = {{response.body.token}}
+
+### Get Current Admin User Profile
+GET {{api_host}}/api/users/me
+Authorization: Bearer {{admin_token}}
+
+### Get Current Regular User Profile
+GET {{api_host}}/api/users/me
+Authorization: Bearer {{user_token}}
