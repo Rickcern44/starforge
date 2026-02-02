@@ -2,6 +2,7 @@ package application
 
 import (
 	"errors"
+	"log/slog"
 	"net/mail"
 	"time"
 
@@ -41,11 +42,10 @@ func (s *AuthService) Login(email, password string) (string, error) {
 		return "", ErrInvalidCredentials
 	}
 
-	// For now, we'll keep roles simple. This could be expanded later.
 	return s.jwt.GenerateToken(&auth.Claims{
 		UserId: user.ID,
 		Email:  user.Email,
-		Roles:  []string{"user"},
+		Roles:  user.Roles,
 	})
 }
 
@@ -57,11 +57,9 @@ func (s *AuthService) Register(name, email, password string) error {
 	// Check if user already exists
 	_, err := s.userRepo.GetUserByEmail(email)
 	if err == nil {
-		// User found, so they already exist
+		slog.Info("user with that email already exists")
 		return ErrUserAlreadyExists
 	}
-	// We expect an error (like "not found"), so if it's a different kind of error, we should return it.
-	// This part needs careful implementation in the repository. For now, we assume any error other than nil means we can proceed.
 
 	hashedPassword, err := hashPassword(password)
 	if err != nil {
@@ -74,6 +72,7 @@ func (s *AuthService) Register(name, email, password string) error {
 		Name:         name,
 		Email:        email,
 		PasswordHash: hashedPassword,
+		Roles:        []string{"user"}, // Assign []string directly
 		CreatedAt:    time.Now(),
 	}
 

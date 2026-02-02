@@ -25,9 +25,15 @@ import (
 	"gorm.io/gorm"
 )
 
-// @title 		Bouncy API
-// @version 	1.0
-
+// @title           Bouncy API
+// @version         0.1.0
+// @description     Internal API
+// @BasePath        /api/v1
+// @schemes         http
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @host localhost:3000
 func main() {
 	var settings *config.Config
 	settings, err := config.LoadConfig(os.Getenv("APP_CONFIG_PATH"))

@@ -1,23 +1,20 @@
-@api_host = http://localhost:8080
-@admin_token = {{auth_flows.http.admin_token}}
-@league_id = {{league_flows.http.league_id}}
-@game_id =
+@api_host = http://localhost:3000
+@league_id =
+@game_id = ""
 @game_charge_id =
 @payment_id =
 
 ### Create a Game (Admin - required for payment allocation)
-# You would typically create games via a dedicated API endpoint first.
-# For demonstration, assume a game with ID '{{game_id}}' exists.
-POST {{api_host}}/api/league/{{league_id}}/games
+POST {{host}}/api/league/{{league_id}}/games
 Content-Type: application/json
-Authorization: Bearer {{admin_token}}
+Authorization: Bearer {{admin_auth_token}}
 
 {
   "location": "Some Venue",
   "costInCents": 1000
 }
 
-@game_id = {{response.body.id}}
+> {% client.global.set("game_id", response.body.gameId); %}
 
 ### List Payments for a League (Admin)
 GET {{api_host}}/api/league/{{league_id}}/payments

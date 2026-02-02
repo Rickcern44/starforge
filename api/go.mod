@@ -4,6 +4,7 @@ go 1.25.6
 
 require (
 	github.com/BurntSushi/toml v1.6.0
+	github.com/bdpiprava/scalar-go v0.13.0
 	github.com/go-chi/chi/v5 v5.2.4
 	github.com/go-chi/cors v1.2.2
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -20,6 +21,9 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/kr/text v0.2.0 // indirect
+	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

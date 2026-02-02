@@ -17,6 +17,9 @@ func RegisterRoutes(
 		r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		})
+
+		handlers.RegisterDocsEndpoints(r, "./.docs")
+
 		handlers.RegisterAuthRoutes(r, deps.AuthHandler)
 
 		r.Group(func(r chi.Router) {
@@ -31,6 +34,10 @@ func RegisterRoutes(
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.RoleMiddleware("admin"))
 				handlers.RegisterPaymentsRoutes(r, deps.PaymentsHandler)
+				// Admin-protected user routes
+				r.Group(func(r chi.Router) {
+					handlers.RegisterAdminUserRoutes(r, deps.UserHandler)
+				})
 			})
 		})
 	})

@@ -35,3 +35,13 @@ func (r *AuthRepository) GetUserByID(id string) (*models.User, error) {
 	}
 	return mappers.UserToDomain(user), nil
 }
+
+func (r *AuthRepository) UpdateUserRoles(userID string, roles []string) error {
+	var user persistence.User
+	if err := r.db.First(&user, "id = ?", userID).Error; err != nil {
+		return err
+	}
+
+	user.Roles = roles
+	return r.db.Save(&user).Error
+}

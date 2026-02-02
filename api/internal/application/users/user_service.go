@@ -16,3 +16,7 @@ func NewUserService(userRepo interfaces.UserRepository) *Service {
 func (s *Service) GetUserByID(id string) (*models.User, error) {
 	return s.userRepo.GetUserByID(id)
 }
+
+func (s *Service) UpdateUserRoles(userID string, roles []string) error {
+	return s.userRepo.UpdateUserRoles(userID, roles)
+}

@@ -61,10 +61,13 @@ func (s JwtService) Validate(tokenString string) (*auth.Claims, error) {
 		// Fallback for comma-separated string if it was somehow stored this way
 		roles = strings.Split(roleStr, ",")
 	}
+	// Note: If claimsMap["roles"] could also be a []byte (JSON encoded string),
+	// you would need to unmarshal it here. However, typical JWT libraries
+	// will parse JSON arrays into []interface{}.
 
 	return &auth.Claims{
 		UserId: claimsMap["sub"].(string),
 		Email:  claimsMap["email"].(string),
-		Roles:  roles, // Assign the correctly parsed roles
+		Roles:  roles,
 	}, nil
 }
