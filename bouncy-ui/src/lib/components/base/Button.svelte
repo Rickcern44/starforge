@@ -1,4 +1,21 @@
 <script lang="ts">
+    // This is to appease tailwind
+    const cachedClasses = [
+        'primary',
+        'secondary',
+        'accent',
+        'ghost',
+        'link',
+        'neutral',
+        'info',
+        'success',
+        'warning',
+        'error',
+        'btn-sm',
+        'btn-md',
+        'btn-lg',
+        'btn-outline'
+    ]
 
     let {
         variant = 'primary',
@@ -31,21 +48,10 @@
         children?: () => any
     }>();
 
-    const classes = $derived(() => {
-        return [
-            'btn',
-            `btn-${variant}`,
-            size !== 'md' && `btn-${size}`,
-            outline && 'btn-outline',
-            loading && 'btn-loading',
-            disabled && 'btn-disabled',
-            className
-        ]
-            .filter(Boolean)
-            .join(' ');
-    });
+
+    const classDefinition = $derived(`btn btn-${variant} btn-${size} ${outline ? 'btn-outlined' : ''}`)
 </script>
 
-<button type={type} class={classes}>
+<button type={type} class="{classDefinition}">
     {@render children?.()}
 </button>

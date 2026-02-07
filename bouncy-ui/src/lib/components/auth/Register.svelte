@@ -1,12 +1,14 @@
 <script lang="ts">
     let {form} = $props();
-    let registerUrl = "http://localhost:3000/api/v1/register";
 </script>
 
 <div class="justify-center">
     <form method="POST">
         <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
             <legend class="fieldset-legend">Register</legend>
+
+            <label for="user_name" class="label">Name</label>
+            <input name="user_name" type="text" class="input" placeholder="Name"/>
 
             <label for="email" class="label">Email</label>
             <input name="email" type="email" class="input" placeholder="Email"/>

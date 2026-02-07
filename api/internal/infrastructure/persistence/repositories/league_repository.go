@@ -68,6 +68,29 @@ func (lr *LeagueRepository) Save(league *models.League) error {
 		return nil
 	})
 }
+
+func (lr *LeagueRepository) FindLeaguesByUserID(userId string) ([]*models.League, error) {
+	var pLeagues []persistence.League
+	err := lr.db.
+		Joins("JOIN league_members ON leagues.id = league_members.league_id").
+		Where("league_members.user_id = ?", userId).
+		Preload("Members").
+		Preload("Games").
+		Find(&pLeagues).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	leagues := make([]*models.League, len(pLeagues))
+	for i, m := range pLeagues {
+		league := mappers.LeagueToDomain(m)
+		leagues[i] = &league
+	}
+
+	return leagues, nil
+}
+
 func (lr *LeagueRepository) Delete(id string) error {
 	return lr.db.Delete(&persistence.League{}, "id = ?", id).Error
 }

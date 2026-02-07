@@ -1,4 +1,5 @@
 import {fail, redirect} from "@sveltejs/kit";
+import axios from "axios";
 
 export const actions = {
     default: async ({cookies, request}) => {
@@ -12,7 +13,20 @@ export const actions = {
             })
         }
 
-        console.log("Succuss!")
+        const response = await axios.post("http://localhost:3000/api/v1/auth/register", {
+            email: data.get("email"),
+            password: data.get("password"),
+        })
+
+        if (response.status === 409) {
+            return fail(409, {
+                error: "User already exists",
+                description: "Error already exists please login or try again"
+            })
+        }
+
+        console.log(response)
+        
         redirect(301, "/")
     }
 }

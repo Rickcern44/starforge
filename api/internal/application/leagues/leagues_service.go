@@ -64,3 +64,7 @@ func (ls *LeagueService) AddGame(leagueId, userId, role string) error {
 func (ls *LeagueService) Delete(leagueId string) error {
 	return ls.leagueRepo.Delete(leagueId)
 }
+
+func (ls *LeagueService) GetLeaguesForUser(userId string) ([]*models.League, error) {
+	return ls.leagueRepo.FindLeaguesByUserID(userId)
+}
