@@ -35,16 +35,13 @@ import (
 // @name Authorization
 // @host localhost:3000
 func main() {
-	var settings *config.Config
 	settings, err := config.LoadConfig(os.Getenv("APP_CONFIG_PATH"))
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	chiServer := server.NewServer()
 	dbServer := database.NewDatabaseService(settings)
-
 	if err := dbServer.Connect(); err != nil {
 		log.Fatal(err)
 	}
@@ -54,18 +51,18 @@ func main() {
 	deps := BuildApplication(dbServer.Database, settings)
 	routes.RegisterRoutes(chiServer.Router(), deps)
 
-	// Start server in a goroutine
-	go func() {
-		port := fmt.Sprintf(":%v", settings.Server.Port)
-		log.Printf("Starting Server on %s", port)
-		if err := chiServer.Start(port); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatal(err)
-		}
-	}()
+	addr := fmt.Sprintf(":%v", settings.Server.Port)
 
-	// Wait for interrupt signal
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	// Start server in a goroutine (so we can wait for shutdown)
+	go func() {
+		log.Printf("Starting Server on %s", addr)
+		if err := chiServer.Start(addr); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("Server failed: %v", err)
+		}
+	}()
 
 	<-shutdown
 
@@ -73,9 +70,8 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
 	if err := chiServer.Shutdown(ctx); err != nil {
-		log.Fatalf("Server Shutdown Failed:%+v", err)
+		log.Fatalf("Server Shutdown Failed: %+v", err)
 	}
 
 	log.Println("Server exited properly")
