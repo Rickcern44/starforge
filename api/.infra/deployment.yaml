@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bouncy-api-deployment
+  labels:
+    app: bouncy-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bouncy-api
+  template:
+    metadata:
+      labels:
+        app: bouncy-api
+    spec:
+      containers:
+      - name: bouncy-api
+        image: bouncy-api:latest # Replace with your actual image from a registry
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_HOST
+          value: "postgres.internal"
+        - name: DB_USER
+          value: "admin"
+        - name: DB_PASSWORD
+          value: "Password123"
+        - name: DB_NAME
+          value: "bouncy"
+        - name: JWT_SECRET
+          value: "c56b2a26018119e273494a0c3526881d4d9705f103d2364ce97ee8cfa849b2b3"

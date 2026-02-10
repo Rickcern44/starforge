@@ -1,0 +1,49 @@
+@api_host = http://localhost:3000
+@league_id =
+@game_id = ""
+@game_charge_id =
+@payment_id =
+
+### Create a Game (Admin - required for payment allocation)
+POST {{host}}/api/league/{{league_id}}/games
+Content-Type: application/json
+Authorization: Bearer {{admin_auth_token}}
+
+{
+  "location": "Some Venue",
+  "costInCents": 1000
+}
+
+> {% client.global.set("game_id", response.body.gameId); %}
+
+### List Payments for a League (Admin)
+GET {{api_host}}/api/league/{{league_id}}/payments
+Authorization: Bearer {{admin_token}}
+
+### Add Payment to a League (Admin)
+POST {{api_host}}/api/league/{{league_id}}/payments
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "userID": "a-valid-user-id-from-your-db",
+  "amountInCents": 2000,
+  "method": "Cash",
+  "receivedAt": "2024-01-20T10:00:00Z",
+  "recordedBy": "a-valid-admin-id-from-your-db",
+  "reference": "Cash payment for January"
+}
+
+@payment_id = {{response.body.id}}
+
+### Allocate Payment to a Game Charge (Admin)
+# This assumes a game charge exists for the game_id and user_id.
+# You would need to create game charges first, usually implicitly when game attendance is recorded.
+POST {{api_host}}/api/payments/{{payment_id}}/allocations
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "gameChargeID": "a-valid-game-charge-id-from-your-db",
+  "amount": 1000
+}

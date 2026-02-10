@@ -1,0 +1,51 @@
+
+# @name register
+### Register Admin User
+POST {{host}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test Admin",
+  "email": "{{adminEmail}}",
+  "password": "{{password}}"
+}
+
+### @name login_admin
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{password}}"
+}
+
+> {% client.global.set("admin_auth_token", response.body.token); %}
+
+### Register Regular User
+POST {{host}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "Regular User",
+  "email": "{{userEmail}}",
+  "password": "{{password}}"
+}
+
+### Login Regular User
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{userEmail}}",
+  "password": "{{password}}"
+}
+
+> {% client.global.set("user_auth_token", response.body.token); %}
+
+### Get Current Admin User Profile
+GET {{host}}/api/users/me
+Authorization: Bearer {{admin_auth_token}}
+
+### Get Current Regular User Profile
+GET {{host}}/api/users/me
+Authorization: Bearer {{user_auth_token}}

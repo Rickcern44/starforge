@@ -1,0 +1,33 @@
+@league_name = Test league {{$random.uuid}}
+@league_id = 019c1a69-9851-79a9-b7f7-bf766a579b90
+
+### Create a New League (Admin)
+POST {{host}}/api/v1/league
+Content-Type: application/json
+Authorization: Bearer {{admin_auth_token}}
+
+{
+  "name": "{{league_name}}"
+}
+
+
+
+### Get League by ID (Admin)
+GET {{host}}/api/league/{{league_id}}
+Authorization: Bearer {{admin_auth_token}}
+
+### Delete League (Admin)
+DELETE {{host}}/api/league/{{league_id}}
+Authorization: Bearer {{user_auth_token}}
+
+
+### Add User to League
+POST {{host}}/api/v1/league/{{league_id}}/members
+Authorization: Bearer
+Content-Type: application/json
+
+{
+  "userId": "bb48b897-4140-4e8d-870f-ff32e81f6a6e",
+  "addingUserId": "bb48b897-4140-4e8d-870f-ff32e81f6a6e",
+  "role": "admin"
+}
