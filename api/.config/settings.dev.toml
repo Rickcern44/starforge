@@ -2,7 +2,7 @@
 port = 8080
 
 [database]
-host = "postgres.internal"
+host = "192.168.86.50"
 port = "5432"
 username = "admin"
 database = "bouncy"
