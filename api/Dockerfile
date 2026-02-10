@@ -21,6 +21,6 @@ ENV APP_CONFIG_PATH=/app/config/settings.dev.toml
 EXPOSE ${PORT}
 
 COPY --from=builder /app/api ./api
-COPY --from=builder /app/.config/settings.dev.toml ./config/settings.dev.toml
+COPY --from=builder /app/.config/settings.dev.toml ./.config/settings.dev.toml
 
 ENTRYPOINT ["./api"]
