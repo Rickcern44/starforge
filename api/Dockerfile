@@ -28,7 +28,7 @@ ENV PORT=8080
 EXPOSE ${PORT}
 
 # Set the working directory
-WORKDIR /app
+WORKDIR /appc
 
 # Copy the pre-built binary from the builder stage
 COPY --from=builder /app/api /app/api

@@ -38,6 +38,16 @@
             </div>
             <span class="text-[11px]">Settings</span>
         </a>
+        <a
+                href="/settings"
+                class="dock-item btn btn-ghost btn-sm flex flex-col gap-0.5"
+                aria-label="Settings"
+        >
+            <div class="flex items-center justify-center h-8 w-8">
+                <Bolt/>
+            </div>
+            <span class="text-[11px]">Settings</span>
+        </a>
     </div>
     <!--Mobile Fab Menu-->
     <div class="fab mb-16 md:hidden">

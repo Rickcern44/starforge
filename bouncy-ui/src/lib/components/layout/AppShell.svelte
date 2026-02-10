@@ -1,7 +1,6 @@
 <script lang="ts">
     import AppBar from "$lib/components/nav/AppBar.svelte";
     import MobileMenu from "$lib/components/nav/MobileMenu.svelte";
-    import {PlusIcon} from "lucide-svelte";
 
     let {children, user} = $props()
 </script>
