@@ -1,7 +1,9 @@
 package repositories
 
 import (
+	"github.com/bouncy/bouncy-api/internal/domain/models"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/persistence"
+	"github.com/bouncy/bouncy-api/internal/infrastructure/persistence/mappers"
 	"gorm.io/gorm"
 )
 
@@ -13,12 +15,9 @@ func NewGameAttendanceRepository(db *gorm.DB) *GameAttendanceRepository {
 	return &GameAttendanceRepository{db: db}
 }
 
-func (r *GameAttendanceRepository) Add(gameID, userID string) error {
-	attendance := persistence.GameAttendance{
-		GameID: gameID,
-		UserID: userID,
-	}
-	return r.db.Create(&attendance).Error
+func (r *GameAttendanceRepository) Add(attendance *models.GameAttendance, gameId string) error {
+	attendanceDto := mappers.GameAttendanceToDto(attendance, gameId)
+	return r.db.Create(&attendanceDto).Error
 }
 
 func (r *GameAttendanceRepository) Remove(gameID, userID string) error {

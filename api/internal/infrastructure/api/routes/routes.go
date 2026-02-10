@@ -13,7 +13,7 @@ func RegisterRoutes(
 	router *chi.Mux,
 	deps *dependencies.Dependencies,
 ) {
-	router.Route("/api", func(r chi.Router) {
+	router.Route("/api/v1", func(r chi.Router) {
 		r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		})

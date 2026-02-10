@@ -11,6 +11,7 @@ func GameToDomain(m persistence.Game) *models.Game {
 		attendance[i] = models.GameAttendance{
 			UserID:         a.UserID,
 			CheckedIn:      a.CheckedIn,
+			Status:         models.AttendanceStatus(a.Status),
 			CheckInComment: a.CheckInComments,
 			CreatedAt:      a.CreatedAt,
 			UpdatedAt:      a.UpdatedAt,

@@ -11,7 +11,7 @@ func UserToDomain(p persistence.User) *models.User {
 		Email:        p.Email,
 		Name:         p.Name,
 		PasswordHash: p.PasswordHash,
-		Roles:        []string(p.Roles), // Explicitly cast
+		Roles:        []string(p.Roles),
 		CreatedAt:    p.CreatedAt,
 	}
 }
@@ -25,6 +25,6 @@ func UserToPersistence(d *models.User) *persistence.User {
 		Email:        d.Email,
 		Name:         d.Name,
 		PasswordHash: d.PasswordHash,
-		Roles:        persistence.Roles(d.Roles), // Explicitly cast
+		Roles:        persistence.Roles(d.Roles),
 	}
 }

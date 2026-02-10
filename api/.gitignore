@@ -3,3 +3,6 @@
 
 # remove private environment files (specifically http file env files)
 *.private.env.json
+
+# Ignore Kubernetes infrastructure files
+.infra/

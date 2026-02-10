@@ -26,3 +26,19 @@ const (
 func (r Role) IsAdmin() bool {
 	return r == RoleAdmin
 }
+
+type AttendanceStatus int
+
+const (
+	Yes AttendanceStatus = iota
+	No
+	Tentative
+)
+
+func (r AttendanceStatus) String() string {
+	return [...]string{"Yes", "No", "Tentative"}[r]
+}
+
+func (r AttendanceStatus) Value() int {
+	return int(r)
+}

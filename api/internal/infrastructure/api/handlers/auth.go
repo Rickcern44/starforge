@@ -22,8 +22,8 @@ func NewAuthHandler(service *application.AuthService) *AuthHandler {
 }
 
 func RegisterAuthRoutes(r chi.Router, handler *AuthHandler) {
-	r.Post("/v1/auth/login", handler.LoginHandler)
-	r.Post("/v1/auth/register", handler.RegistrationHandler)
+	r.Post("/auth/login", handler.LoginHandler)
+	r.Post("/auth/register", handler.RegistrationHandler)
 }
 
 // LoginRequest represents the request body for user login.
@@ -60,7 +60,7 @@ func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	token, err := h.service.Login(request.Email, request.Password)
 	if err != nil {
 		if errors.Is(err, application.ErrUserNotFound) || errors.Is(err, application.ErrInvalidCredentials) {
-			utils.WriteJSON(w, http.StatusUnauthorized, contract.ErrorResponse{Error: "Invalid email or password"})
+			utils.WriteJSON(w, http.StatusUnauthorized, contract.ErrorResponse{Error: "Unable to complete login", Message: "Invalid email or password"})
 			return
 		}
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: "An internal error occurred"})
@@ -104,7 +104,8 @@ func (h *AuthHandler) RegistrationHandler(w http.ResponseWriter, r *http.Request
 	err := h.service.Register(request.Name, request.Email, request.Password)
 	if err != nil {
 		if errors.Is(err, application.ErrUserAlreadyExists) {
-			utils.WriteJSON(w, http.StatusConflict, contract.ErrorResponse{Error: err.Error()})
+			//utils.WriteJSON(w, http.StatusConflict, contract.ErrorResponse{Error: err.Error()})
+			http.Error(w, "User already exists", http.StatusConflict)
 			return
 		}
 		// Catch validation errors

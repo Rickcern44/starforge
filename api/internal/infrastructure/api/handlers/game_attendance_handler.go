@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/bouncy/bouncy-api/internal/application/game_attendances"
+	"github.com/bouncy/bouncy-api/internal/domain/models"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/contract"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/auth"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/utils"
@@ -24,6 +26,11 @@ func RegisterGameAttendanceRoutes(r chi.Router, handler *GameAttendanceHandler) 
 	r.Delete("/game/{gameId}/attendance/{userId}", handler.RemoveAttendance)
 }
 
+type GameAttendanceRequest struct {
+	Status  models.AttendanceStatus `json:"status"`
+	Comment string                  `json:"comment"`
+}
+
 // GameAttendanceResponse represents a generic success response for game attendance operations.
 type GameAttendanceResponse struct{}
 
@@ -41,15 +48,21 @@ type GameAttendanceResponse struct{}
 // @Router /game/{gameId}/attendance [post]
 func (h *GameAttendanceHandler) AddAttendance(w http.ResponseWriter, r *http.Request) {
 	gameId := chi.URLParam(r, "gameId")
-	userID, ok := r.Context().Value(auth.ClaimsContextKey).(string)
+	userId, ok := r.Context().Value(auth.ClaimsContextKey).(string)
+
 	if !ok {
 		utils.WriteJSON(w, http.StatusUnauthorized, contract.ErrorResponse{Error: "invalid user context"})
 		return
 	}
 
-	if err := h.service.Add(gameId, userID); err != nil {
-		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
+	var request GameAttendanceRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: err.Error()})
 		return
+	}
+
+	if err := h.service.Add(request.Status, gameId, userId, request.Comment); err != nil {
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 	}
 
 	w.WriteHeader(http.StatusCreated)

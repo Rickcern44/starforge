@@ -36,7 +36,7 @@ func RegisterAdminUserRoutes(r chi.Router, handler *UserHandler) {
 // @Success 200 {object} models.User "Current user details"
 // @Failure 401 {object} contract.ErrorResponse "Unauthorized"
 // @Failure 404 {object} contract.ErrorResponse "User not found"
-// @Router v1/users/me [get]
+// @Router /api/users/me [get]
 func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value(auth.ClaimsContextKey).(*auth.Claims)
 	if !ok || claims == nil {
@@ -71,7 +71,7 @@ type UpdateUserRolesRequest struct {
 // @Failure 400 {object} contract.ErrorResponse "Invalid request body"
 // @Failure 404 {object} contract.ErrorResponse "User not found"
 // @Failure 500 {object} contract.ErrorResponse "Internal server error"
-// @Router /users/{userId}/roles [patch]
+// @Router /api/users/{userId}/roles [patch]
 func (h *UserHandler) UpdateUserRoles(w http.ResponseWriter, r *http.Request) {
 	userID := chi.URLParam(r, "userId")
 
