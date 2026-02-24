@@ -19,13 +19,16 @@ class GameCharge {
 
   factory GameCharge.fromMap(Map<String, dynamic> map) {
     return GameCharge(
-      id: map['ID'] ?? '',
-      gameId: map['GameID'] ?? '',
-      userId: map['UserID'] ?? '',
-      amountCents: map['AmountCents'] ?? 0,
-      createdAt: DateTime.tryParse(map['CreatedAt'] ?? '') ?? DateTime.now(),
+      id: map['ID'] ?? map['id'] ?? '',
+      gameId: map['GameID'] ?? map['gameId'] ?? map['game_id'] ?? '',
+      userId: map['UserID'] ?? map['userId'] ?? map['user_id'] ?? '',
+      amountCents: map['AmountCents'] ?? map['amountCents'] ?? 0,
+      createdAt:
+          DateTime.tryParse(map['CreatedAt'] ?? map['createdAt'] ?? '') ??
+              DateTime.now(),
       allocations: List<PaymentAllocation>.from(
-        (map['Allocations'] ?? []).map((x) => PaymentAllocation.fromMap(x)),
+        ((map['Allocations'] ?? map['allocations']) ?? [])
+            .map((x) => PaymentAllocation.fromMap(x)),
       ),
     );
   }

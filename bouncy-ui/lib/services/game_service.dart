@@ -1,5 +1,7 @@
 import 'package:logging/logging.dart';
 import 'api_service.dart';
+import 'dart:convert';
+import '../models/game.dart';
 
 class GameService {
   static final _log = Logger('GameService');
@@ -31,5 +33,23 @@ class GameService {
       _log.severe('Error updating attendance for game $gameId', e, stack);
       return false;
     }
+  }
+
+  static Future<Game?> getGameById(String gameId) async {
+    try {
+      _log.info('Fetching game $gameId');
+      final response = await ApiService.get('/game/$gameId');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) {
+          return Game.fromMap(data);
+        }
+      }
+      _log.warning(
+          'Failed to fetch game $gameId. Status: ${response.statusCode}');
+    } catch (e, stack) {
+      _log.severe('Error fetching game $gameId', e, stack);
+    }
+    return null;
   }
 }

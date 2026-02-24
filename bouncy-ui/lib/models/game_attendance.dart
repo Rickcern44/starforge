@@ -15,11 +15,18 @@ class GameAttendance {
 
   factory GameAttendance.fromMap(Map<String, dynamic> map) {
     return GameAttendance(
-      userId: map['UserID'] ?? '',
-      checkedIn: map['CheckedIn'] ?? false,
-      checkInComment: map['CheckInComment'] ?? '',
-      createdAt: DateTime.tryParse(map['CreatedAt'] ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(map['UpdatedAt'] ?? '') ?? DateTime.now(),
+      userId: map['UserID'] ?? map['userId'] ?? map['user_id'] ?? '',
+      checkedIn: map['CheckedIn'] ?? map['checkedIn'] ?? false,
+      checkInComment: map['CheckInComment'] ??
+          map['checkInComment'] ??
+          map['check_in_comment'] ??
+          '',
+      createdAt:
+          DateTime.tryParse(map['CreatedAt'] ?? map['createdAt'] ?? '') ??
+              DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(map['UpdatedAt'] ?? map['updatedAt'] ?? '') ??
+              DateTime.now(),
     );
   }
 }

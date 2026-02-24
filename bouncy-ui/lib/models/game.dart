@@ -24,17 +24,21 @@ class Game {
 
   factory Game.fromMap(Map<String, dynamic> map) {
     return Game(
-      id: map['ID'] ?? '',
-      leagueId: map['LeagueID'] ?? '',
-      startTime: DateTime.tryParse(map['StartTime'] ?? '') ?? DateTime.now(),
-      location: map['Location'] ?? '',
-      costInCents: map['CostInCents'] ?? 0,
-      isCanceled: map['IsCanceled'] ?? false,
+      id: map['ID'] ?? map['id'] ?? '',
+      leagueId: map['LeagueID'] ?? map['leagueId'] ?? map['league_id'] ?? '',
+      startTime:
+          DateTime.tryParse(map['StartTime'] ?? map['startTime'] ?? '') ??
+              DateTime.now(),
+      location: map['Location'] ?? map['location'] ?? '',
+      costInCents: map['CostInCents'] ?? map['costInCents'] ?? 0,
+      isCanceled: map['IsCanceled'] ?? map['isCanceled'] ?? false,
       attendance: List<GameAttendance>.from(
-        (map['Attendance'] ?? []).map((x) => GameAttendance.fromMap(x)),
+        ((map['Attendance'] ?? map['attendance']) ?? [])
+            .map((x) => GameAttendance.fromMap(x)),
       ),
       charges: List<GameCharge>.from(
-        (map['Charges'] ?? []).map((x) => GameCharge.fromMap(x)),
+        ((map['Charges'] ?? map['charges']) ?? [])
+            .map((x) => GameCharge.fromMap(x)),
       ),
     );
   }

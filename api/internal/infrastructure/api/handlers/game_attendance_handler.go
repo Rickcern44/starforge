@@ -35,20 +35,21 @@ type GameAttendanceRequest struct {
 type GameAttendanceResponse struct{}
 
 // AddAttendance handles adding a user's attendance to a game.
-// @Summary Add user attendance to a game
-// @Description Adds the currently authenticated user as an attendee to a specific game.
+// @Summary Add or Update user attendance to a game
+// @Description Adds or updates the currently authenticated user as an attendee to a specific game.
 // @Tags game_attendance
 // @Accept json
 // @Produce json
 // @Param gameId path string true "ID of the game"
 // @Security BearerAuth
 // @Success 201 {object} GameAttendanceResponse "User attendance added successfully"
+// @Success 200 {object} GameAttendanceResponse "User attendance updated successfully"
 // @Failure 401 {object} contract.ErrorResponse "Unauthorized or invalid user context"
 // @Failure 500 {object} contract.ErrorResponse "Internal server error"
 // @Router /game/{gameId}/attendance [post]
 func (h *GameAttendanceHandler) AddAttendance(w http.ResponseWriter, r *http.Request) {
 	gameId := chi.URLParam(r, "gameId")
-	userId, ok := r.Context().Value(auth.ClaimsContextKey).(string)
+	userId, ok := r.Context().Value(auth.ClaimsContextKey).(*auth.Claims)
 
 	if !ok {
 		utils.WriteJSON(w, http.StatusUnauthorized, contract.ErrorResponse{Error: "invalid user context"})
@@ -61,11 +62,17 @@ func (h *GameAttendanceHandler) AddAttendance(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if err := h.service.Add(request.Status, gameId, userId, request.Comment); err != nil {
+	created, err := h.service.Add(request.Status, gameId, userId.UserId, request.Comment)
+	if err != nil {
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
+		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	if created {
+		w.WriteHeader(http.StatusCreated)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 // RemoveAttendance handles removing a user's attendance from a game.

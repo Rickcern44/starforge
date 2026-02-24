@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/game.dart';
+import '../models/game_attendance.dart';
 import '../services/game_service.dart';
+import '../services/auth_service.dart';
 
 class EventDetailsScreen extends StatefulWidget {
   final Game game;
@@ -22,11 +24,18 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   String? _selectedStatus;
   final TextEditingController _commentController = TextEditingController();
   bool _isUpdating = false;
+  late Game _game;
 
   @override
   void dispose() {
     _commentController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _game = widget.game;
   }
 
   Future<void> _handleUpdateAttendance() async {
@@ -45,7 +54,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     final status = statusMap[_selectedStatus!];
 
     final success = await GameService.updateAttendance(
-      gameId: widget.game.id,
+      gameId: _game.id,
       status: status!,
       comment: _commentController.text,
     );
@@ -56,9 +65,23 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       _isUpdating = false;
     });
 
+    // If update succeeded, fetch the canonical game and refresh UI
+    if (success) {
+      try {
+        final fetched = await GameService.getGameById(_game.id);
+        if (fetched != null) {
+          setState(() {
+            _game = fetched;
+          });
+        }
+      } catch (_) {}
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(success ? 'Attendance updated successfully!' : 'Failed to update attendance.'),
+        content: Text(success
+            ? 'Attendance updated successfully!'
+            : 'Failed to update attendance.'),
         backgroundColor: success ? Colors.green : Colors.red,
       ),
     );
@@ -76,11 +99,13 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                'Game at ${widget.game.location}',
+                'Game at ${_game.location}',
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
-                  shadows: [const Shadow(blurRadius: 10, color: Colors.black45)],
+                  shadows: [
+                    const Shadow(blurRadius: 10, color: Colors.black45)
+                  ],
                 ),
               ),
               background: Container(
@@ -112,8 +137,9 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   _buildCheckInSection(colorScheme),
                   const SizedBox(height: 24),
                   Text(
-                    'Attendees (${widget.game.attendance.length})',
-                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+                    'Attendees (${_game.attendance.length})',
+                    style: GoogleFonts.poppins(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   _buildAttendeesList(colorScheme),
@@ -140,7 +166,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           children: [
             Text(
               'Your Status',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+              style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 12),
             Row(
@@ -156,8 +183,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               controller: _commentController,
               decoration: InputDecoration(
                 hintText: 'Add a comment...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
             ),
             const SizedBox(height: 12),
@@ -169,7 +198,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                     ? const SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
                       )
                     : const Text('Update Attendance'),
               ),
@@ -205,11 +235,13 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   Widget _buildAttendeesList(ColorScheme colorScheme) {
-    if (widget.game.attendance.isEmpty) {
+    if (_game.attendance.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: Text('No one has checked in yet', style: TextStyle(color: Colors.grey[600], fontStyle: FontStyle.italic)),
+          child: Text('No one has checked in yet',
+              style: TextStyle(
+                  color: Colors.grey[600], fontStyle: FontStyle.italic)),
         ),
       );
     }
@@ -217,15 +249,16 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: widget.game.attendance.length,
+      itemCount: _game.attendance.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
-        final attendance = widget.game.attendance[index];
+        final attendance = _game.attendance[index];
 
         return Card(
           elevation: 0,
-          color: colorScheme.surfaceVariant.withOpacity(0.1),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          color: colorScheme.surfaceContainerHighest.withOpacity(0.1),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
@@ -237,26 +270,35 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                     backgroundColor: colorScheme.secondaryContainer,
                     child: const Icon(Icons.person, size: 20),
                   ),
-                  title: Text('User: ${attendance.userId.substring(0, 8)}...', style: const TextStyle(fontWeight: FontWeight.w500)),
-                  subtitle: Text(attendance.checkedIn ? 'Checked In' : 'Pending'),
+                  title: Text('User: ${attendance.userId.substring(0, 8)}...',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
+                  subtitle:
+                      Text(attendance.checkedIn ? 'Checked In' : 'Pending'),
                   trailing: Icon(
-                    attendance.checkedIn ? Icons.check_circle : Icons.help_outline,
+                    attendance.checkedIn
+                        ? Icons.check_circle
+                        : Icons.help_outline,
                     color: attendance.checkedIn ? Colors.green : Colors.orange,
                   ),
                 ),
                 if (attendance.checkInComment.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(left: 56.0, bottom: 8.0, right: 16.0),
+                    padding: const EdgeInsets.only(
+                        left: 56.0, bottom: 8.0, right: 16.0),
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: colorScheme.surface,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
+                        border: Border.all(
+                            color: colorScheme.outlineVariant.withOpacity(0.5)),
                       ),
                       child: Text(
                         attendance.checkInComment,
-                        style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, fontStyle: FontStyle.italic),
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: colorScheme.onSurfaceVariant,
+                            fontStyle: FontStyle.italic),
                       ),
                     ),
                   ),
@@ -271,19 +313,21 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   Widget _buildInfoCard(BuildContext context, ColorScheme colorScheme) {
     return Card(
       elevation: 0,
-      color: colorScheme.surfaceVariant.withOpacity(0.3),
+      color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildInfoRow(Icons.calendar_today, 'Date', DateFormat('MMM d, y').format(widget.game.startTime)),
+            _buildInfoRow(Icons.calendar_today, 'Date',
+                DateFormat('MMM d, y').format(_game.startTime)),
             const Divider(height: 24),
-            _buildInfoRow(Icons.access_time, 'Time', DateFormat('HH:mm').format(widget.game.startTime)),
+            _buildInfoRow(Icons.access_time, 'Time',
+                DateFormat('HH:mm').format(_game.startTime)),
             const Divider(height: 24),
             _buildInfoRow(Icons.group, 'League', widget.leagueName),
             const Divider(height: 24),
-            _buildInfoRow(Icons.location_on, 'Location', widget.game.location),
+            _buildInfoRow(Icons.location_on, 'Location', _game.location),
           ],
         ),
       ),
@@ -299,7 +343,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(label,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
               Text(
                 value,
                 style: const TextStyle(fontWeight: FontWeight.w500),

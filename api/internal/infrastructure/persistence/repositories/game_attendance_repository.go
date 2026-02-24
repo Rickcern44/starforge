@@ -23,3 +23,21 @@ func (r *GameAttendanceRepository) Add(attendance *models.GameAttendance, gameId
 func (r *GameAttendanceRepository) Remove(gameID, userID string) error {
 	return r.db.Where("game_id = ? AND user_id = ?", gameID, userID).Delete(&persistence.GameAttendance{}).Error
 }
+
+func (r *GameAttendanceRepository) FindByGameAndUser(gameID, userID string) (*models.GameAttendance, error) {
+	var attendanceDto persistence.GameAttendance
+	err := r.db.Where("game_id = ? AND user_id = ?", gameID, userID).First(&attendanceDto).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	domain := mappers.GameAttendanceToDomain(attendanceDto)
+	return domain, nil
+}
+
+func (r *GameAttendanceRepository) Update(attendance *models.GameAttendance, gameID string) error {
+	attendanceDto := mappers.GameAttendanceToDto(attendance, gameID)
+	return r.db.Save(attendanceDto).Error
+}

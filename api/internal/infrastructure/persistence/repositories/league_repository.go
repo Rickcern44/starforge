@@ -76,6 +76,7 @@ func (lr *LeagueRepository) FindLeaguesByUserID(userId string) ([]*models.League
 		Where("league_members.user_id = ?", userId).
 		Preload("Members").
 		Preload("Games").
+		Preload("Games.Attendance").
 		Find(&pLeagues).Error
 
 	if err != nil {

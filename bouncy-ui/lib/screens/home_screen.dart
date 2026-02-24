@@ -21,6 +21,19 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   User? _currentUser;
 
+  bool get _canCreateEvent {
+    if (_currentUser == null) return false;
+    for (final league in _leagues) {
+      for (final member in league.members) {
+        if (member.playerId == _currentUser!.id) {
+          final role = member.role.toLowerCase();
+          if (role.contains('admin') || role.contains('owner')) return true;
+        }
+      }
+    }
+    return false;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -93,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final filteredGames = _getFilteredGames();
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceVariant.withOpacity(0.3),
+      backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,8 +134,9 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await AuthService.logout();
-              if (mounted)
+              if (mounted) {
                 Navigator.of(context).pushReplacementNamed('/auth/login');
+              }
             },
           ),
           const SizedBox(width: 8),
@@ -153,11 +167,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.pushNamed(context, '/events/create'),
-        label: const Text('New Event'),
-        icon: const Icon(Icons.add),
-      ),
+      floatingActionButton: _canCreateEvent
+          ? FloatingActionButton.extended(
+              onPressed: () => Navigator.pushNamed(context, '/events/create'),
+              label: const Text('New Event'),
+              icon: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 

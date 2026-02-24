@@ -24,10 +24,11 @@ class League {
       name: map['Name'] ?? '',
       isActive: map['IsActive'] ?? false,
       members: List<LeagueMember>.from(
-        (map['Members'] ?? []).map((x) => LeagueMember.fromMap(x)),
+        ((map['Members'] ?? map['members']) ?? [])
+            .map((x) => LeagueMember.fromMap(x)),
       ),
       games: List<Game>.from(
-        (map['Games'] ?? []).map((x) => Game.fromMap(x)),
+        ((map['Games'] ?? map['games']) ?? []).map((x) => Game.fromMap(x)),
       ),
     );
   }

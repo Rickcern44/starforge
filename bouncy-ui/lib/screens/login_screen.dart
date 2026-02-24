@@ -236,8 +236,8 @@ class _LoginScreenState extends State<LoginScreen> {
             logger.warning('Login failed');
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text(
+                const SnackBar(
+                  content: Text(
                       'Unable to loging, please check your username and password'),
                   backgroundColor: Colors.red,
                 ),
