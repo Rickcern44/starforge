@@ -1,7 +1,7 @@
 package models
 
 type PaymentAllocation struct {
-	PaymentID     string
-	GameChargeID  string
-	AmountInCents int
+	PaymentID     string `json:"paymentId"`
+	GameChargeID  string `json:"gameChargeId"`
+	AmountInCents int    `json:"amountInCents"`
 }

@@ -7,16 +7,16 @@ import (
 )
 
 type Game struct {
-	ID        string
-	LeagueID  string
-	StartTime time.Time
-	Location  string
+	ID        string    `json:"id"`
+	LeagueID  string    `json:"leagueId"`
+	StartTime time.Time `json:"startTime"`
+	Location  string    `json:"location"`
 
-	CostInCents int
-	IsCanceled  bool
+	CostInCents int  `json:"costInCents"`
+	IsCanceled  bool `json:"isCanceled"`
 
-	Attendance []GameAttendance
-	Charges    []GameCharge
+	Attendance []GameAttendance `json:"attendance"`
+	Charges    []GameCharge     `json:"charges"`
 }
 
 func CreateGame(leagueId, location string, costInCents int) *Game {

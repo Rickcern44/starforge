@@ -6,12 +6,12 @@ import (
 )
 
 type League struct {
-	ID       string
-	Name     string
-	IsActive bool
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	IsActive bool   `json:"isActive"`
 
-	Members []LeagueMember
-	Games   []*Game
+	Members []LeagueMember `json:"members"`
+	Games   []*Game        `json:"games"`
 }
 
 func (l *League) AddMember(playerId string, role Role) error {

@@ -40,7 +40,7 @@ func (r GameRepository) Create(game *models.Game) (*models.Game, error) {
 
 func (r GameRepository) GetById(gameId string) (*models.Game, error) {
 	var row persistence.Game
-	if err := r.db.Where("game_id = ?", gameId).First(&row).Error; err != nil {
+	if err := r.db.Preload("Attendance").Where("id = ?", gameId).First(&row).Error; err != nil {
 		return nil, err
 	}
 
@@ -48,9 +48,9 @@ func (r GameRepository) GetById(gameId string) (*models.Game, error) {
 }
 
 func (r GameRepository) Update(gameId string, game *models.Game) (*models.Game, error) {
-	gameEntity := mappers.GameToDto(game)
+	pGame := mappers.GameToPersistence(game)
 
-	if err := r.db.Model(&gameEntity).Where("game_id = ?", gameId).Updates(&gameEntity).Error; err != nil {
+	if err := r.db.Model(&persistence.Game{}).Where("id = ?", gameId).Updates(pGame).Error; err != nil {
 		return nil, err
 	}
 
@@ -58,5 +58,5 @@ func (r GameRepository) Update(gameId string, game *models.Game) (*models.Game, 
 }
 
 func (r GameRepository) Cancel(gameId string) error {
-	return r.db.Delete(&models.Game{}, "game_id = ?", gameId).Error
+	return r.db.Delete(&persistence.Game{}, "id = ?", gameId).Error
 }

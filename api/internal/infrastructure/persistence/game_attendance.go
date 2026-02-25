@@ -3,12 +3,12 @@ package persistence
 import "time"
 
 type GameAttendance struct {
-	GameID          string    `gorm:"type:uuid;primaryKey"`
-	UserID          string    `gorm:"type:uuid;primaryKey"`
-	CheckedIn       bool      `gorm:"default:false"`
-	Status          int       `gorm:"type:smallint"`
-	CheckInComments string    `json:"checkInComments"`
-	CreatedAt       time.Time `gorm:"autoCreateTime"`
-	UpdatedAt       time.Time `gorm:"autoUpdateTime"`
-	Game            Game      `gorm:"foreignKey:GameID;constraint:OnDelete:CASCADE"`
+	GameID          string    `gorm:"type:uuid;primaryKey" json:"gameId"`
+	UserID          string    `gorm:"type:uuid;primaryKey" json:"userId"`
+	CheckedIn       bool      `gorm:"default:false" json:"checkedIn"`
+	Status          int       `gorm:"type:smallint" json:"status"`
+	CheckInComments string    `gorm:"type:text" json:"checkInComments"`
+	CreatedAt       time.Time `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt       time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
+	Game            Game      `gorm:"foreignKey:GameID;constraint:OnDelete:CASCADE" json:"-"`
 }

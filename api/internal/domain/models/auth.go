@@ -8,5 +8,5 @@ type User struct {
 	Name         string    `json:"name"`
 	PasswordHash string    `json:"-"`
 	Roles        []string  `json:"roles"`
-	CreatedAt    time.Time `json:"created_at"`
+	CreatedAt    time.Time `json:"createdAt"`
 }

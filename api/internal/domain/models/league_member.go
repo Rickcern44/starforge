@@ -3,10 +3,10 @@ package models
 import "time"
 
 type LeagueMember struct {
-	LeagueID string
-	PlayerID string
-	Role     Role
-	JoinedAt time.Time
+	LeagueID string    `json:"leagueId"`
+	PlayerID string    `json:"playerId"`
+	Role     Role      `json:"role"`
+	JoinedAt time.Time `json:"joinedAt"`
 }
 
 func CreateLeagueMember(leagueID, playerID string, role Role) *LeagueMember {
