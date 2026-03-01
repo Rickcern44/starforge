@@ -2,11 +2,13 @@ package application
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/mail"
 	"time"
 
 	"github.com/bouncy/bouncy-api/internal/application/interfaces"
+	"github.com/bouncy/bouncy-api/internal/application/payments"
 	"github.com/bouncy/bouncy-api/internal/domain/models"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/auth"
 	"github.com/google/uuid"
@@ -17,24 +19,28 @@ var (
 	ErrUserNotFound       = errors.New("user not found")
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrUserAlreadyExists  = errors.New("user with that email already exists")
+	ErrInvalidInvitation  = errors.New("invalid or expired invitation")
 )
 
 type AuthService struct {
-	jwt      *JwtService
-	userRepo interfaces.UserRepository
+	jwt            *JwtService
+	userRepo       interfaces.UserRepository
+	emailService   interfaces.EmailService
+	paymentService *payments.Service
 }
 
-func NewAuthService(jwt *JwtService, userRepo interfaces.UserRepository) *AuthService {
+func NewAuthService(jwt *JwtService, userRepo interfaces.UserRepository, email interfaces.EmailService, payments *payments.Service) *AuthService {
 	return &AuthService{
-		jwt:      jwt,
-		userRepo: userRepo,
+		jwt:            jwt,
+		userRepo:       userRepo,
+		emailService:   email,
+		paymentService: payments,
 	}
 }
 
 func (s *AuthService) Login(email, password string) (string, error) {
 	user, err := s.userRepo.GetUserByEmail(email)
 	if err != nil {
-		// Consider logging the internal error, but return a generic one
 		return "", ErrUserNotFound
 	}
 
@@ -49,12 +55,56 @@ func (s *AuthService) Login(email, password string) (string, error) {
 	})
 }
 
+func (s *AuthService) InviteUser(email, leagueID, invitedBy string) error {
+	token := uuid.NewString()
+	inv := &models.Invitation{
+		Token:     token,
+		Email:     email,
+		LeagueID:  leagueID,
+		InvitedBy: invitedBy,
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour), // 7 days
+	}
+
+	if err := s.userRepo.CreateInvitation(inv); err != nil {
+		return err
+	}
+
+	// For now, we'll assume the league name is just "Bouncy League" or fetch it later
+	return s.emailService.SendInvitation(email, token, "Bouncy League")
+}
+
+func (s *AuthService) RegisterWithInvitation(token, name, email, password string) error {
+	inv, err := s.userRepo.GetInvitationByToken(token)
+	if err != nil || !inv.IsValid() {
+		return ErrInvalidInvitation
+	}
+
+	// Registration email must match invitation email for security
+	if inv.Email != email {
+		return fmt.Errorf("registration email does not match invitation")
+	}
+
+	if err := s.Register(name, email, password); err != nil {
+		return err
+	}
+
+	// Mark invitation as used
+	_ = s.userRepo.MarkInvitationAsUsed(token, time.Now())
+
+	// Auto-claim any spreadsheet records
+	user, _ := s.userRepo.GetUserByEmail(email)
+	if user != nil {
+		_ = s.paymentService.ClaimUnclaimedRecords(user.ID, name)
+	}
+
+	return nil
+}
+
 func (s *AuthService) Register(name, email, password string) error {
 	if err := s.ValidateLoginRequirements(email, password); err != nil {
 		return err
 	}
 
-	// Check if user already exists
 	_, err := s.userRepo.GetUserByEmail(email)
 	if err == nil {
 		slog.Info("user with that email already exists")
@@ -63,7 +113,6 @@ func (s *AuthService) Register(name, email, password string) error {
 
 	hashedPassword, err := hashPassword(password)
 	if err != nil {
-		// Log internal error
 		return errors.New("internal server error")
 	}
 
@@ -72,7 +121,7 @@ func (s *AuthService) Register(name, email, password string) error {
 		Name:         name,
 		Email:        email,
 		PasswordHash: hashedPassword,
-		Roles:        []string{"user"}, // Assign []string directly
+		Roles:        []string{"user"},
 		CreatedAt:    time.Now(),
 	}
 

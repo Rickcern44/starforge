@@ -12,6 +12,7 @@ import (
 	"github.com/bouncy/bouncy-api/internal/application/payments"
 	"github.com/bouncy/bouncy-api/internal/application/users"
 	"github.com/bouncy/bouncy-api/internal/domain/models"
+	"github.com/google/uuid"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -187,14 +188,12 @@ func (service *Service) IdentifyNewCharges(
 	var chargesToCreate []*models.GameCharge
 
 	// Create a map of date -> Game ID for quick lookup
+	// The spreadsheet uses labels like "5-Mar"
 	gameMap := make(map[string]string)
 	for _, g := range games {
 		key := g.StartTime.Format("2-Jan")
 		gameMap[key] = g.ID
 	}
-
-	// Fetch all existing charges for this league to optimize duplicate checking
-	// (Implementation detail: We'll assume paymentsService.ListByLeague is available or similar)
 
 	// Cache user lookups by name
 	userCache := make(map[string]*string)
@@ -233,6 +232,8 @@ func (service *Service) IdentifyNewCharges(
 			if trimmedVal == "x" {
 				gameID, ok := gameMap[dateLabel]
 				if !ok {
+					// This might happen if the game exists in the spreadsheet but not in our DB list
+					// though Phase 1 should have caught it.
 					continue
 				}
 
@@ -256,9 +257,80 @@ func (service *Service) IdentifyNewCharges(
 	return chargesToCreate, nil
 }
 
+func (service *Service) IdentifyNewPayments(
+	attendanceData []AttendanceData,
+	paymentsService *payments.Service,
+	userService *users.Service,
+) ([]*models.Payment, error) {
+	var paymentsToCreate []*models.Payment
+
+	// Cache user lookups by name
+	userCache := make(map[string]*string)
+
+	for _, data := range attendanceData {
+		if data.AmountPaidInCents <= 0 {
+			continue
+		}
+
+		// 1. Try to find User ID from name
+		var userID *string
+		if cachedID, ok := userCache[data.Name]; ok {
+			userID = cachedID
+		} else {
+			user, err := userService.FindByName(data.Name)
+			if err == nil && user != nil {
+				id := user.ID
+				userID = &id
+			}
+			userCache[data.Name] = userID
+		}
+
+		// 2. Calculate current total payments in DB
+		currentPaidInCents := 0
+		if userID != nil {
+			p, err := paymentsService.ListPaymentsByUser(*userID)
+			if err == nil {
+				for _, pay := range p {
+					currentPaidInCents += pay.AmountInCents
+				}
+			}
+		}
+
+		unclaimed, err := paymentsService.ListPaymentsByExternalName(data.Name)
+		if err == nil {
+			for _, pay := range unclaimed {
+				currentPaidInCents += pay.AmountInCents
+			}
+		}
+
+		// 3. Compare with spreadsheet
+		diff := data.AmountPaidInCents - currentPaidInCents
+		if diff > 0 {
+			ref := fmt.Sprintf("Spreadsheet Sync: %s", data.Name)
+			payment := models.CreatePayment(userID, data.Name, service.LeagueId, diff, models.PaymentMethodCash, &ref)
+			// Ensure it has an ID
+			id, _ := uuid.NewV7()
+			payment.ID = id.String()
+
+			paymentsToCreate = append(paymentsToCreate, payment)
+		}
+	}
+
+	return paymentsToCreate, nil
+}
+
 func (service *Service) ExecuteChargeCreation(charges []*models.GameCharge, paymentsService *payments.Service) error {
 	for _, c := range charges {
 		if err := paymentsService.CreateCharge(c); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (service *Service) ExecutePaymentCreation(payments []*models.Payment, paymentsService *payments.Service) error {
+	for _, p := range payments {
+		if err := paymentsService.Add(p); err != nil {
 			return err
 		}
 	}

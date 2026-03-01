@@ -3,11 +3,13 @@ package container
 import (
 	"github.com/bouncy/bouncy-api/internal/application"
 	"github.com/bouncy/bouncy-api/internal/application/game_attendances"
+	"github.com/bouncy/bouncy-api/internal/application/interfaces"
 	"github.com/bouncy/bouncy-api/internal/application/leagues"
 	"github.com/bouncy/bouncy-api/internal/application/payments"
 	"github.com/bouncy/bouncy-api/internal/application/users"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/dependencies"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/config"
+	"github.com/bouncy/bouncy-api/internal/infrastructure/email"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/persistence/repositories"
 	"gorm.io/gorm"
 )
@@ -23,6 +25,7 @@ type AppContainer struct {
 	PaymentsService       *payments.Service
 	JwtService            *application.JwtService
 	AuthService           *application.AuthService
+	EmailService          interfaces.EmailService
 }
 
 func NewAppContainer(db *gorm.DB, settings *config.Config) *AppContainer {
@@ -39,9 +42,11 @@ func NewAppContainer(db *gorm.DB, settings *config.Config) *AppContainer {
 	userService := users.NewUserService(authRepo)
 	gameAttendanceService := game_attendances.NewGameAttendanceService(gameAttendanceRepo)
 	paymentsService := payments.NewPaymentsService(paymentsRepo)
-	
+
+	emailService := email.NewMockEmailService()
+
 	jwtService := application.NewJwtService(settings.Auth.JwtSecret)
-	authService := application.NewAuthService(jwtService, authRepo)
+	authService := application.NewAuthService(jwtService, authRepo, emailService, paymentsService)
 
 	return &AppContainer{
 		DB:                    db,
@@ -54,6 +59,7 @@ func NewAppContainer(db *gorm.DB, settings *config.Config) *AppContainer {
 		PaymentsService:       paymentsService,
 		JwtService:            jwtService,
 		AuthService:           authService,
+		EmailService:          emailService,
 	}
 }
 

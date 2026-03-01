@@ -17,6 +17,14 @@ func (s *Service) ListByLeague(leagueID string) ([]models.Payment, error) {
 	return s.repo.ListByLeague(leagueID)
 }
 
+func (s *Service) ListPaymentsByUser(userID string) ([]models.Payment, error) {
+	return s.repo.ListPaymentsByUser(userID)
+}
+
+func (s *Service) ListPaymentsByExternalName(name string) ([]models.Payment, error) {
+	return s.repo.ListPaymentsByExternalName(name)
+}
+
 func (s *Service) Add(payment *models.Payment) error {
 	return s.repo.Add(payment)
 }
@@ -35,4 +43,8 @@ func (s *Service) ListChargesByUser(userID string) ([]models.GameCharge, error) 
 
 func (s *Service) ListChargesByExternalName(name string) ([]models.GameCharge, error) {
 	return s.repo.ListChargesByExternalName(name)
+}
+
+func (s *Service) ClaimUnclaimedRecords(userID string, externalName string) error {
+	return s.repo.ClaimUnclaimedRecords(userID, externalName)
 }

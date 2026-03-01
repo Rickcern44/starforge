@@ -7,6 +7,7 @@ import (
 	"github.com/bouncy/bouncy-api/internal/application/payments"
 	"github.com/bouncy/bouncy-api/internal/domain/models"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/contract"
+	"github.com/bouncy/bouncy-api/internal/infrastructure/api/middleware"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/utils"
 	"github.com/go-chi/chi/v5"
 )
@@ -24,19 +25,15 @@ func RegisterPaymentsRoutes(r chi.Router, handler *PaymentsHandler) {
 	r.Get("/league/{leagueId}/payments", handler.ListPayments)
 	r.Post("/league/{leagueId}/payments", handler.AddPayment)
 	r.Post("/payments/{paymentId}/allocations", handler.AddAllocation)
+
+	// Admin routes
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RoleMiddleware(string(models.RoleAdmin)))
+		r.Post("/admin/payments/claim", handler.ClaimRecords)
+	})
 }
 
 // ListPayments handles listing all payments for a specific league.
-// @Summary List all payments for a specific league
-// @Description Retrieves a list of all payments associated with the given league ID.
-// @Tags payments
-// @Accept json
-// @Produce json
-// @Param leagueId path string true "ID of the league"
-// @Security BearerAuth
-// @Success 200 {array} models.Payment "List of payments"
-// @Failure 500 {object} contract.ErrorResponse "Internal server error"
-// @Router /league/{leagueId}/payments [get]
 func (h *PaymentsHandler) ListPayments(w http.ResponseWriter, r *http.Request) {
 	leagueId := chi.URLParam(r, "leagueId")
 
@@ -50,18 +47,6 @@ func (h *PaymentsHandler) ListPayments(w http.ResponseWriter, r *http.Request) {
 }
 
 // AddPayment handles adding a new payment to a league.
-// @Summary Add a new payment to a league
-// @Description Creates a new payment entry for the specified league.
-// @Tags payments
-// @Accept json
-// @Produce json
-// @Param leagueId path string true "ID of the league"
-// @Param request body models.Payment true "Payment creation details"
-// @Security BearerAuth
-// @Success 201 {object} object "Payment created successfully"
-// @Failure 400 {object} contract.ErrorResponse "Invalid request body"
-// @Failure 500 {object} contract.ErrorResponse "Internal server error"
-// @Router /league/{leagueId}/payments [post]
 func (h *PaymentsHandler) AddPayment(w http.ResponseWriter, r *http.Request) {
 	leagueId := chi.URLParam(r, "leagueId")
 
@@ -81,18 +66,6 @@ func (h *PaymentsHandler) AddPayment(w http.ResponseWriter, r *http.Request) {
 }
 
 // AddAllocation handles adding an allocation to a payment.
-// @Summary Add an allocation to a payment
-// @Description Adds a new allocation to an existing payment.
-// @Tags payments
-// @Accept json
-// @Produce json
-// @Param paymentId path string true "ID of the payment"
-// @Param request body models.PaymentAllocation true "Payment allocation details"
-// @Security BearerAuth
-// @Success 201 {object} object "Allocation created successfully"
-// @Failure 400 {object} contract.ErrorResponse "Invalid request body"
-// @Failure 500 {object} contract.ErrorResponse "Internal server error"
-// @Router /payments/{paymentId}/allocations [post]
 func (h *PaymentsHandler) AddAllocation(w http.ResponseWriter, r *http.Request) {
 	paymentId := chi.URLParam(r, "paymentId")
 
@@ -108,4 +81,36 @@ func (h *PaymentsHandler) AddAllocation(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.WriteHeader(http.StatusCreated)
+}
+
+type ClaimRecordsRequest struct {
+	UserID       string `json:"userId"`
+	ExternalName string `json:"externalName"`
+}
+
+// ClaimRecords handles claiming unclaimed payments and charges for a user.
+// @Summary Claim unclaimed payments and charges for a user
+// @Description Links all unclaimed payments and charges with a specific external name to a user ID.
+// @Tags payments
+// @Accept json
+// @Produce json
+// @Param request body ClaimRecordsRequest true "Claim details"
+// @Security BearerAuth
+// @Success 200 {object} object "Records claimed successfully"
+// @Failure 400 {object} contract.ErrorResponse "Invalid request body"
+// @Failure 500 {object} contract.ErrorResponse "Internal server error"
+// @Router /admin/payments/claim [post]
+func (h *PaymentsHandler) ClaimRecords(w http.ResponseWriter, r *http.Request) {
+	var req ClaimRecordsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	if err := h.service.ClaimUnclaimedRecords(req.UserID, req.ExternalName); err != nil {
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Records claimed successfully"})
 }

@@ -26,6 +26,7 @@ func (r *PaymentsRepository) ListByLeague(leagueID string) ([]models.Payment, er
 			ID:            p.ID,
 			AmountInCents: p.AmountInCents,
 			UserID:        p.UserID,
+			ExternalName:  p.ExternalName,
 			LeagueID:      p.LeagueID,
 			ReceivedAt:    p.ReceivedAt,
 		})
@@ -33,10 +34,52 @@ func (r *PaymentsRepository) ListByLeague(leagueID string) ([]models.Payment, er
 	return domainPayments, nil
 }
 
+func (r *PaymentsRepository) ListPaymentsByUser(userID string) ([]models.Payment, error) {
+	var payments []persistence.Payment
+	if err := r.db.Where("user_id = ?", userID).Find(&payments).Error; err != nil {
+		return nil, err
+	}
+
+	var domain []models.Payment
+	for _, p := range payments {
+		domain = append(domain, models.Payment{
+			ID:            p.ID,
+			AmountInCents: p.AmountInCents,
+			UserID:        p.UserID,
+			ExternalName:  p.ExternalName,
+			LeagueID:      p.LeagueID,
+			ReceivedAt:    p.ReceivedAt,
+		})
+	}
+	return domain, nil
+}
+
+func (r *PaymentsRepository) ListPaymentsByExternalName(name string) ([]models.Payment, error) {
+	var payments []persistence.Payment
+	if err := r.db.Where("external_name = ?", name).Find(&payments).Error; err != nil {
+		return nil, err
+	}
+
+	var domain []models.Payment
+	for _, p := range payments {
+		domain = append(domain, models.Payment{
+			ID:            p.ID,
+			AmountInCents: p.AmountInCents,
+			UserID:        p.UserID,
+			ExternalName:  p.ExternalName,
+			LeagueID:      p.LeagueID,
+			ReceivedAt:    p.ReceivedAt,
+		})
+	}
+	return domain, nil
+}
+
 func (r *PaymentsRepository) Add(payment *models.Payment) error {
 	p := &persistence.Payment{
+		Base:          persistence.Base{ID: payment.ID},
 		AmountInCents: payment.AmountInCents,
 		UserID:        payment.UserID,
+		ExternalName:  payment.ExternalName,
 		LeagueID:      payment.LeagueID,
 		ReceivedAt:    payment.ReceivedAt,
 		Method:        string(payment.Method),
@@ -104,4 +147,24 @@ func (r *PaymentsRepository) ListChargesByExternalName(name string) ([]models.Ga
 		})
 	}
 	return domain, nil
+}
+
+func (r *PaymentsRepository) ClaimUnclaimedRecords(userID string, externalName string) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Claim Charges
+		if err := tx.Model(&persistence.GameCharge{}).
+			Where("external_name = ? AND user_id IS NULL", externalName).
+			Update("user_id", userID).Error; err != nil {
+			return err
+		}
+
+		// 2. Claim Payments
+		if err := tx.Model(&persistence.Payment{}).
+			Where("external_name = ? AND user_id IS NULL", externalName).
+			Update("user_id", userID).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

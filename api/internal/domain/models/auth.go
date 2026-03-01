@@ -10,3 +10,16 @@ type User struct {
 	Roles        []string  `json:"roles"`
 	CreatedAt    time.Time `json:"createdAt"`
 }
+
+type Invitation struct {
+	Token     string
+	Email     string
+	LeagueID  string
+	InvitedBy string
+	ExpiresAt time.Time
+	UsedAt    *time.Time
+}
+
+func (i Invitation) IsValid() bool {
+	return i.UsedAt == nil && i.ExpiresAt.After(time.Now())
+}

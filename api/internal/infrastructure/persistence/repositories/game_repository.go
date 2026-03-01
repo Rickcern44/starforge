@@ -17,7 +17,7 @@ func NewGameRepository(db *gorm.DB) *GameRepository {
 
 func (r GameRepository) ListGamesByLeague(leagueId string) ([]*models.Game, error) {
 	var rows []persistence.Game
-	if err := r.db.Where("league_id = ?", leagueId).Find(&rows).Error; err != nil {
+	if err := r.db.Preload("Attendance.User").Where("league_id = ?", leagueId).Find(&rows).Error; err != nil {
 		return nil, err
 	}
 
@@ -40,7 +40,7 @@ func (r GameRepository) Create(game *models.Game) (*models.Game, error) {
 
 func (r GameRepository) GetById(gameId string) (*models.Game, error) {
 	var row persistence.Game
-	if err := r.db.Preload("Attendance").Where("id = ?", gameId).First(&row).Error; err != nil {
+	if err := r.db.Preload("Attendance.User").Where("id = ?", gameId).First(&row).Error; err != nil {
 		return nil, err
 	}
 

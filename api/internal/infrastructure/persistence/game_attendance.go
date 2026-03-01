@@ -10,5 +10,7 @@ type GameAttendance struct {
 	CheckInComments string    `gorm:"type:text" json:"checkInComments"`
 	CreatedAt       time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt       time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
-	Game            Game      `gorm:"foreignKey:GameID;constraint:OnDelete:CASCADE" json:"-"`
+
+	Game Game `gorm:"foreignKey:GameID;constraint:OnDelete:CASCADE" json:"-"`
+	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user"`
 }

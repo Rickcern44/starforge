@@ -10,6 +10,7 @@ func GameToDomain(m persistence.Game) *models.Game {
 	for i, a := range m.Attendance {
 		attendance[i] = models.GameAttendance{
 			UserID:         a.UserID,
+			UserName:       a.User.Name, // Populate from preloaded User
 			CheckedIn:      a.CheckedIn,
 			Status:         models.AttendanceStatus(a.Status),
 			CheckInComment: a.CheckInComments,
