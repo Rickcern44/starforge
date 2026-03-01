@@ -19,6 +19,28 @@ func GameToDomain(m persistence.Game) *models.Game {
 		}
 	}
 
+	charges := make([]models.GameCharge, len(m.Charges))
+	for i, c := range m.Charges {
+		allocations := make([]models.PaymentAllocation, len(c.Allocations))
+		for j, a := range c.Allocations {
+			allocations[j] = models.PaymentAllocation{
+				PaymentID:     a.PaymentID,
+				GameChargeID:  a.GameChargeID,
+				AmountInCents: a.AmountInCents,
+			}
+		}
+
+		charges[i] = models.GameCharge{
+			ID:           c.ID,
+			GameID:       c.GameID,
+			UserID:       c.UserID,
+			ExternalName: c.ExternalName,
+			AmountCents:  c.AmountCents,
+			CreatedAt:    c.CreatedAt,
+			Allocations:  allocations,
+		}
+	}
+
 	return &models.Game{
 		ID:          m.ID,
 		LeagueID:    m.LeagueID,
@@ -27,6 +49,7 @@ func GameToDomain(m persistence.Game) *models.Game {
 		CostInCents: m.CostInCents,
 		IsCanceled:  m.IsCanceled,
 		Attendance:  attendance,
+		Charges:     charges,
 	}
 }
 

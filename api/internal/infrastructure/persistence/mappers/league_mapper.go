@@ -9,10 +9,11 @@ func LeagueToDomain(m persistence.League) models.League {
 	members := make([]models.LeagueMember, len(m.Members))
 	for i, member := range m.Members {
 		members[i] = models.LeagueMember{
-			PlayerID: member.UserID,
-			LeagueID: member.LeagueID,
-			Role:     member.Role,
-			JoinedAt: member.JoinedAt,
+			PlayerID:   member.UserID,
+			PlayerName: member.User.Name,
+			LeagueID:   member.LeagueID,
+			Role:       member.Role,
+			JoinedAt:   member.JoinedAt,
 		}
 	}
 

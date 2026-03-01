@@ -1,17 +1,16 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { page } from '$app/stores';
-  import { getGameById, updateAttendance } from '$lib/services/game';
+  import { getGameById, updateAttendance, removeAttendance } from '$lib/services/game';
   import { getLeagues } from '$lib/services/league';
   import type { Game, League } from '$lib/models';
   import { authService } from '$lib/services/auth.svelte';
+  import { goto } from '$app/navigation';
 
   let { data } = $props();
 
   let gameId = $derived($page.params.id);
   let game = $state<Game | null>(data.game);
   let leagues = $state<League[]>(data.leagues || []);
-  let isLoading = $state(false);
   let isUpdating = $state(false);
 
   let user = $derived(authService.user);
@@ -25,11 +24,47 @@
     return league ? league.name : 'Unknown League';
   });
 
+  let currentLeague = $derived(leagues.find(l => l.id === game?.leagueId));
+  let isAdmin = $derived.by(() => {
+    if (!user || !currentLeague) return false;
+    const member = currentLeague.members.find(m => m.playerId === user.id);
+    return member && (member.role.toLowerCase().includes('admin') || member.role.toLowerCase().includes('owner'));
+  });
+
+  let isPastGame = $derived.by(() => {
+    if (!game) return false;
+    const gTime = game.startTime instanceof Date ? game.startTime.getTime() : new Date(game.startTime).getTime();
+    return gTime < new Date().getTime();
+  });
+
+  let canEditRSVP = $derived(!isPastGame || isAdmin);
+
   // Keep this for when navigation happens client-side without full reload
   $effect(() => {
     if (data.game) game = data.game;
     if (data.leagues) leagues = data.leagues;
   });
+
+  async function handleRemoveAttendance(targetUserId: string, targetUserName: string) {
+    if (!game) return;
+    if (!confirm(`Are you sure you want to remove ${targetUserName || 'this user'} from the attendance list?`)) return;
+
+    const previousAttendance = [...game.attendance];
+    // Optimistic Update
+    game.attendance = game.attendance.filter(a => a.userId !== targetUserId);
+
+    try {
+      const success = await removeAttendance(gameId, targetUserId);
+      if (!success) {
+        game.attendance = previousAttendance;
+        alert('Failed to remove attendance.');
+      }
+    } catch (err) {
+      console.error('[Event Page] Error in handleRemoveAttendance:', err);
+      game.attendance = previousAttendance;
+      alert('An error occurred while removing attendance.');
+    }
+  }
 
   async function handleUpdateAttendance() {
     if (!selectedStatus || !user || !game) {
@@ -127,11 +162,21 @@
       Back
     </button>
     {#if game}
-      {#if game.isCanceled}
-        <span class="px-3 py-1 bg-red-100 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest">Canceled</span>
-      {:else}
-        <span class="px-3 py-1 bg-green-100 text-green-600 rounded-full text-[10px] font-black uppercase tracking-widest">Active</span>
-      {/if}
+      <div class="flex items-center space-x-2">
+        {#if isAdmin}
+          <button 
+            onclick={() => goto(`/leagues/${game!.leagueId}/admin`)}
+            class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-colors"
+          >
+            Manage League
+          </button>
+        {/if}
+        {#if game.isCanceled}
+          <span class="px-3 py-1 bg-red-100 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest">Canceled</span>
+        {:else}
+          <span class="px-3 py-1 bg-green-100 text-green-600 rounded-full text-[10px] font-black uppercase tracking-widest">Active</span>
+        {/if}
+      </div>
     {/if}
   </header>
 
@@ -142,11 +187,7 @@
     </div>
   {/if}
 
-  {#if isLoading}
-    <div class="flex justify-center items-center py-20">
-      <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
-    </div>
-  {:else if !game}
+  {#if !game}
     <div class="bg-white p-12 rounded-3xl shadow-sm border border-gray-100 text-center space-y-4">
       <div class="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-gray-300">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -209,7 +250,15 @@
     </div>
 
     <!-- Attendance RSVP (More Compact) -->
-    <section class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+    <section class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4 relative overflow-hidden">
+      {#if !canEditRSVP}
+        <div class="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center p-6 text-center">
+          <div class="bg-white p-4 rounded-2xl shadow-xl border border-gray-100 max-w-[200px]">
+            <p class="text-xs font-black text-gray-400 uppercase tracking-widest leading-tight">Registration closed for this past event</p>
+          </div>
+        </div>
+      {/if}
+      
       <div class="flex justify-between items-center">
         <h3 class="text-lg font-black text-gray-900">Your RSVP</h3>
         {#if userStatus}
@@ -228,6 +277,7 @@
             class:border-gray-50={selectedStatus !== status}
             class:text-gray-400={selectedStatus !== status}
             onclick={() => selectedStatus = status}
+            disabled={!canEditRSVP}
           >
             <span class="text-[10px] font-black uppercase tracking-widest">{status}</span>
           </button>
@@ -240,12 +290,13 @@
           placeholder="Optional comment..."
           class="w-full p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-gray-300 text-sm font-medium"
           rows="1"
+          disabled={!canEditRSVP}
         ></textarea>
       </div>
 
       <button
         class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 px-6 rounded-xl shadow-lg shadow-indigo-100 transition-all duration-200 disabled:opacity-50"
-        disabled={isUpdating || !selectedStatus}
+        disabled={isUpdating || !selectedStatus || !canEditRSVP}
         onclick={handleUpdateAttendance}
       >
         {#if isUpdating}
@@ -255,6 +306,7 @@
           </div>
         {:else}
           Save RSVP
+          {#if !canEditRSVP} (Admin Only){/if}
         {/if}
       </button>
     </section>
@@ -276,17 +328,31 @@
             <div class="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group">
               <div class="flex items-center space-x-3">
                 <div class="h-8 w-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 font-black text-[10px] uppercase">
-                  {attendance.userId.substring(0, 1)}
+                  {(attendance.userName || attendance.userId).substring(0, 1)}
                 </div>
                 <div>
-                  <p class="font-bold text-gray-800 text-sm leading-none mb-1">User {attendance.userId.substring(0, 5)}</p>
+                  <p class="font-bold text-gray-800 text-sm leading-none mb-1">
+                    {attendance.userName || `User ${attendance.userId.substring(0, 5)}`}
+                  </p>
                   {#if attendance.checkInComment}
                     <p class="text-[10px] text-gray-400 italic truncate max-w-[150px]">"{attendance.checkInComment}"</p>
                   {/if}
                 </div>
               </div>
               
-              <div>
+              <div class="flex items-center space-x-2">
+                {#if isAdmin}
+                  <button 
+                    onclick={() => handleRemoveAttendance(attendance.userId, attendance.userName || 'this user')}
+                    class="p-1.5 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                    title="Remove attendee"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                {/if}
+                
                 {#if attendance.status === 0}
                   <span class="px-2 py-0.5 bg-green-50 text-green-600 rounded-md text-[9px] font-black uppercase tracking-widest">Yes</span>
                 {:else if attendance.status === 1}

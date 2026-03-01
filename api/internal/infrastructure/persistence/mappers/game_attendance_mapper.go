@@ -6,8 +6,14 @@ import (
 )
 
 func GameAttendanceToDomain(p persistence.GameAttendance) *models.GameAttendance {
+	userName := p.UserID
+	if p.User.Name != "" {
+		userName = p.User.Name
+	}
+
 	return &models.GameAttendance{
 		UserID:         p.UserID,
+		UserName:       userName,
 		CheckedIn:      p.CheckedIn,
 		Status:         models.AttendanceStatus(p.Status),
 		CheckInComment: p.CheckInComments,

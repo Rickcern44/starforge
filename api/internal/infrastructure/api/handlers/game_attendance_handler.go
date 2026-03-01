@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/bouncy/bouncy-api/internal/application/game_attendances"
@@ -49,21 +50,24 @@ type GameAttendanceResponse struct{}
 // @Router /game/{gameId}/attendance [post]
 func (h *GameAttendanceHandler) AddAttendance(w http.ResponseWriter, r *http.Request) {
 	gameId := chi.URLParam(r, "gameId")
-	userId, ok := r.Context().Value(auth.ClaimsContextKey).(*auth.Claims)
+	claims, ok := r.Context().Value(auth.ClaimsContextKey).(*auth.Claims)
 
 	if !ok {
+		slog.Error("Add attendance failed: invalid user context")
 		utils.WriteJSON(w, http.StatusUnauthorized, contract.ErrorResponse{Error: "invalid user context"})
 		return
 	}
 
 	var request GameAttendanceRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		slog.Error("Failed to decode attendance request", "error", err)
 		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	created, err := h.service.Add(request.Status, gameId, userId.UserId, request.Comment)
+	created, err := h.service.Add(request.Status, gameId, claims.UserId, request.Comment)
 	if err != nil {
+		slog.Error("Add attendance service failed", "gameId", gameId, "userId", claims.UserId, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -92,6 +96,7 @@ func (h *GameAttendanceHandler) RemoveAttendance(w http.ResponseWriter, r *http.
 	userId := chi.URLParam(r, "userId")
 
 	if err := h.service.Remove(gameId, userId); err != nil {
+		slog.Error("Remove attendance failed", "gameId", gameId, "userId", userId, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}

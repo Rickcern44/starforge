@@ -11,6 +11,16 @@ export async function updateAttendance(gameId: string, status: number, comment: 
   }
 }
 
+export async function removeAttendance(gameId: string, userId: string): Promise<boolean> {
+  try {
+    await api.request('DELETE', `game/${gameId}/attendance/${userId}`);
+    return true;
+  } catch (error) {
+    console.error(`Error removing attendance for user ${userId} from game ${gameId}:`, error);
+    return false;
+  }
+}
+
 export async function getGameById(gameId: string, fetch?: api.Fetch, token?: string): Promise<Game | null> {
   try {
     const game = await api.get(`game/${gameId}`, fetch, token);

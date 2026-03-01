@@ -5,7 +5,6 @@ import type { User } from '$lib/models';
 class AuthService {
   user = $state<User | null>(null);
   token = $state<string | null>(null);
-  loadingProfile = $state(false);
 
   constructor() {
     if (browser) {
@@ -26,10 +25,7 @@ class AuthService {
 
       // If we have a token but no user, fetch profile automatically
       if (this.token && !this.user) {
-        this.loadingProfile = true;
-        this.fetchAndSaveUserProfile().finally(() => {
-          this.loadingProfile = false;
-        });
+        this.fetchAndSaveUserProfile();
       }
 
       $effect.root(() => {
@@ -135,10 +131,6 @@ class AuthService {
       localStorage.removeItem('current_user');
       this.deleteCookie('access_token');
     }
-  }
-
-  get isAuthenticated(): boolean {
-    return !!this.token;
   }
 }
 

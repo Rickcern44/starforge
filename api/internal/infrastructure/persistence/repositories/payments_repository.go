@@ -16,75 +16,77 @@ func NewPaymentsRepository(db *gorm.DB) *PaymentsRepository {
 
 func (r *PaymentsRepository) ListByLeague(leagueID string) ([]models.Payment, error) {
 	var payments []persistence.Payment
-	if err := r.db.Where("league_id = ?", leagueID).Find(&payments).Error; err != nil {
+	if err := r.db.Preload("Allocations").Where("league_id = ?", leagueID).Find(&payments).Error; err != nil {
 		return nil, err
 	}
 
 	var domainPayments []models.Payment
 	for _, p := range payments {
-		domainPayments = append(domainPayments, models.Payment{
-			ID:            p.ID,
-			AmountInCents: p.AmountInCents,
-			UserID:        p.UserID,
-			ExternalName:  p.ExternalName,
-			LeagueID:      p.LeagueID,
-			ReceivedAt:    p.ReceivedAt,
-		})
+		domainPayments = append(domainPayments, persistenceToDomainPayment(p))
 	}
 	return domainPayments, nil
 }
 
 func (r *PaymentsRepository) ListPaymentsByUser(userID string) ([]models.Payment, error) {
 	var payments []persistence.Payment
-	if err := r.db.Where("user_id = ?", userID).Find(&payments).Error; err != nil {
+	if err := r.db.Preload("Allocations").Where("user_id = ?", userID).Find(&payments).Error; err != nil {
 		return nil, err
 	}
 
 	var domain []models.Payment
 	for _, p := range payments {
-		domain = append(domain, models.Payment{
-			ID:            p.ID,
-			AmountInCents: p.AmountInCents,
-			UserID:        p.UserID,
-			ExternalName:  p.ExternalName,
-			LeagueID:      p.LeagueID,
-			ReceivedAt:    p.ReceivedAt,
-		})
+		domain = append(domain, persistenceToDomainPayment(p))
 	}
 	return domain, nil
 }
 
 func (r *PaymentsRepository) ListPaymentsByExternalName(name string) ([]models.Payment, error) {
 	var payments []persistence.Payment
-	if err := r.db.Where("external_name = ?", name).Find(&payments).Error; err != nil {
+	if err := r.db.Preload("Allocations").Where("external_name = ?", name).Find(&payments).Error; err != nil {
 		return nil, err
 	}
 
 	var domain []models.Payment
 	for _, p := range payments {
-		domain = append(domain, models.Payment{
-			ID:            p.ID,
-			AmountInCents: p.AmountInCents,
-			UserID:        p.UserID,
-			ExternalName:  p.ExternalName,
-			LeagueID:      p.LeagueID,
-			ReceivedAt:    p.ReceivedAt,
-		})
+		domain = append(domain, persistenceToDomainPayment(p))
 	}
 	return domain, nil
 }
 
+func persistenceToDomainPayment(p persistence.Payment) models.Payment {
+	allocations := make([]models.PaymentAllocation, len(p.Allocations))
+	for i, a := range p.Allocations {
+		allocations[i] = models.PaymentAllocation{
+			PaymentID:     a.PaymentID,
+			GameChargeID:  a.GameChargeID,
+			AmountInCents: a.AmountInCents,
+		}
+	}
+
+	return models.Payment{
+		ID:            p.ID,
+		AmountInCents: p.AmountCents,
+		UserID:        p.UserID,
+		ExternalName:  p.ExternalName,
+		LeagueID:      p.LeagueID,
+		ReceivedAt:    p.ReceivedAt,
+		Method:        models.PaymentMethod(p.Method),
+		Reference:     p.Reference,
+		Allocations:   allocations,
+	}
+}
+
 func (r *PaymentsRepository) Add(payment *models.Payment) error {
 	p := &persistence.Payment{
-		Base:          persistence.Base{ID: payment.ID},
-		AmountInCents: payment.AmountInCents,
-		UserID:        payment.UserID,
-		ExternalName:  payment.ExternalName,
-		LeagueID:      payment.LeagueID,
-		ReceivedAt:    payment.ReceivedAt,
-		Method:        string(payment.Method),
-		RecordedBy:    payment.RecordedBy,
-		Reference:     payment.Reference,
+		Base:         persistence.Base{ID: payment.ID},
+		AmountCents:  payment.AmountInCents,
+		UserID:       payment.UserID,
+		ExternalName: payment.ExternalName,
+		LeagueID:     payment.LeagueID,
+		ReceivedAt:   payment.ReceivedAt,
+		Method:       string(payment.Method),
+		RecordedBy:   payment.RecordedBy,
+		Reference:    payment.Reference,
 	}
 	return r.db.Create(p).Error
 }
@@ -117,14 +119,25 @@ func (r *PaymentsRepository) ListChargesByUser(userID string) ([]models.GameChar
 
 	var domain []models.GameCharge
 	for _, c := range charges {
-		domain = append(domain, models.GameCharge{
-			ID:           c.ID,
-			GameID:       c.GameID,
-			UserID:       c.UserID,
-			ExternalName: c.ExternalName,
-			AmountCents:  c.AmountCents,
-			CreatedAt:    c.CreatedAt,
-		})
+		domain = append(domain, persistenceToDomainCharge(c))
+	}
+	return domain, nil
+}
+
+func (r *PaymentsRepository) ListUnpaidChargesByUser(userID string) ([]models.GameCharge, error) {
+	var charges []persistence.GameCharge
+	// We load all charges for the user and filter in-memory for simplicity,
+	// or we could use a complex SQL JOIN/Subquery to find charges where SUM(allocations) < amount_cents.
+	if err := r.db.Preload("Allocations").Where("user_id = ?", userID).Order("created_at asc").Find(&charges).Error; err != nil {
+		return nil, err
+	}
+
+	var domain []models.GameCharge
+	for _, c := range charges {
+		dc := persistenceToDomainCharge(c)
+		if !dc.IsPaid() {
+			domain = append(domain, dc)
+		}
 	}
 	return domain, nil
 }
@@ -137,16 +150,30 @@ func (r *PaymentsRepository) ListChargesByExternalName(name string) ([]models.Ga
 
 	var domain []models.GameCharge
 	for _, c := range charges {
-		domain = append(domain, models.GameCharge{
-			ID:           c.ID,
-			GameID:       c.GameID,
-			UserID:       c.UserID,
-			ExternalName: c.ExternalName,
-			AmountCents:  c.AmountCents,
-			CreatedAt:    c.CreatedAt,
-		})
+		domain = append(domain, persistenceToDomainCharge(c))
 	}
 	return domain, nil
+}
+
+func persistenceToDomainCharge(c persistence.GameCharge) models.GameCharge {
+	allocations := make([]models.PaymentAllocation, len(c.Allocations))
+	for i, a := range c.Allocations {
+		allocations[i] = models.PaymentAllocation{
+			PaymentID:     a.PaymentID,
+			GameChargeID:  a.GameChargeID,
+			AmountInCents: a.AmountInCents,
+		}
+	}
+
+	return models.GameCharge{
+		ID:           c.ID,
+		GameID:       c.GameID,
+		UserID:       c.UserID,
+		ExternalName: c.ExternalName,
+		AmountCents:  c.AmountCents,
+		CreatedAt:    c.CreatedAt,
+		Allocations:  allocations,
+	}
 }
 
 func (r *PaymentsRepository) ClaimUnclaimedRecords(userID string, externalName string) error {

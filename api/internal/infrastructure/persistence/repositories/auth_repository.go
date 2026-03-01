@@ -82,6 +82,26 @@ func (r *AuthRepository) GetInvitationByToken(token string) (*models.Invitation,
 	}, nil
 }
 
+func (r *AuthRepository) GetInvitationsByLeague(leagueID string) ([]models.Invitation, error) {
+	var pInvites []persistence.Invitation
+	if err := r.db.Where("league_id = ?", leagueID).Find(&pInvites).Error; err != nil {
+		return nil, err
+	}
+
+	invites := make([]models.Invitation, len(pInvites))
+	for i, p := range pInvites {
+		invites[i] = models.Invitation{
+			Token:     p.Token,
+			Email:     p.Email,
+			LeagueID:  p.LeagueID,
+			InvitedBy: p.InvitedBy,
+			ExpiresAt: p.ExpiresAt,
+			UsedAt:    p.UsedAt,
+		}
+	}
+	return invites, nil
+}
+
 func (r *AuthRepository) MarkInvitationAsUsed(token string, usedAt time.Time) error {
 	return r.db.Model(&persistence.Invitation{}).Where("token = ?", token).Update("used_at", usedAt).Error
 }

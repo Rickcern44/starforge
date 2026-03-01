@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"errors"
+
 	"github.com/bouncy/bouncy-api/internal/domain/models"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/persistence"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/persistence/mappers"
@@ -17,7 +19,7 @@ func NewLeagueMemberRepository(db *gorm.DB) *LeagueMemberRepository {
 
 func (l LeagueMemberRepository) ListByLeague(leagueID string) ([]models.LeagueMember, error) {
 	var rows []persistence.LeagueMember
-	if err := l.db.Where("league_id = ?", leagueID).Find(&rows).Error; err != nil {
+	if err := l.db.Preload("User").Where("league_id = ?", leagueID).Find(&rows).Error; err != nil {
 		return nil, err
 	}
 
@@ -45,6 +47,14 @@ func (l LeagueMemberRepository) Remove(leagueID, userID string) error {
 }
 
 func (l LeagueMemberRepository) IsAdmin(leagueID, userID string) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+	var member persistence.LeagueMember
+	err := l.db.Where("league_id = ? AND user_id = ?", leagueID, userID).First(&member).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return member.Role == models.RoleAdmin || member.Role == "owner", nil
 }

@@ -82,7 +82,7 @@
 
       <div class="flex items-center justify-between">
         <div class="text-sm">
-          <a href="/auth/forgot-password" class="font-medium text-indigo-600 hover:text-indigo-500">
+          <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500 cursor-not-allowed" onclick={(e) => { e.preventDefault(); alert('Password recovery is coming soon!'); }}>
             Forgot your password?
           </a>
         </div>

@@ -1,85 +1,61 @@
 <script lang="ts">
-  import { authService } from '$lib/services/auth.svelte';
-  import { goto } from '$app/navigation';
+  import type { Payment, GameCharge } from '$lib/models';
 
-  // Mock data to match the Flutter implementation
-  let items = $state([
-    {
-      id: '1',
-      type: 'charge',
-      title: 'Game vs Red Dragons',
-      date: 'Oct 10, 2023',
-      amount: 15.0,
-      status: 'unpaid'
-    },
-    {
-      id: '2',
-      type: 'charge',
-      title: 'Game vs Blue Hawks',
-      date: 'Oct 17, 2023',
-      amount: 15.0,
-      status: 'unpaid'
-    },
-    {
-      id: '3',
-      type: 'payment',
-      title: 'Bulk Payment',
-      date: 'Oct 05, 2023',
-      amount: 45.0,
-      status: 'completed'
-    },
-    {
-      id: '4',
-      type: 'charge',
-      title: 'Court Rental Fee',
-      date: 'Oct 01, 2023',
-      amount: 10.0,
-      status: 'paid'
-    },
-  ]);
+  let { data } = $props();
 
-  let selectedChargeIds = $state(new Set<string>());
+  function getUnpaidAmount(charge: GameCharge) {
+    const paid = charge.allocations?.reduce((sum, a) => sum + a.amountInCents, 0) || 0;
+    return (charge.amountCents - paid) / 100;
+  }
 
-  let selectedTotal = $derived.by(() => {
-    let total = 0;
-    items.forEach(item => {
-      if (selectedChargeIds.has(item.id)) {
-        total += item.amount;
-      }
-    });
-    return total;
+  let unpaidCharges = $derived.by(() => {
+    if (!data.charges) return [];
+    return data.charges
+      .map(c => ({
+        ...c,
+        unpaid: getUnpaidAmount(c)
+      }))
+      .filter(c => c.unpaid > 0)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  });
+
+  let recentActivity = $derived.by(() => {
+    const items: any[] = [];
+    
+    if (data.charges) {
+      data.charges.forEach((c: GameCharge) => {
+        items.push({
+          id: c.id,
+          type: 'charge',
+          title: c.externalName || `Game ${c.gameId.substring(0, 5)}`,
+          date: new Date(c.createdAt).toLocaleDateString(),
+          rawDate: new Date(c.createdAt),
+          amount: c.amountCents / 100,
+          status: getUnpaidAmount(c) > 0 ? 'unpaid' : 'paid'
+        });
+      });
+    }
+
+    if (data.payments) {
+      data.payments.forEach((p: Payment) => {
+        items.push({
+          id: p.id,
+          type: 'payment',
+          title: 'Payment Received',
+          date: new Date(p.receivedAt).toLocaleDateString(),
+          rawDate: new Date(p.receivedAt),
+          amount: p.amountInCents / 100,
+          status: 'completed'
+        });
+      });
+    }
+
+    return items.sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime());
   });
 
   let outstandingBalance = $derived.by(() => {
-    return items
-      .filter(i => i.type === 'charge' && i.status === 'unpaid')
-      .reduce((sum, i) => sum + i.amount, 0);
+    return unpaidCharges.reduce((sum, i) => sum + i.unpaid, 0);
   });
-
-  function toggleSelection(id: string) {
-    if (selectedChargeIds.has(id)) {
-      selectedChargeIds.delete(id);
-    } else {
-      selectedChargeIds.add(id);
-    }
-    // We need to re-assign to trigger reactivity for the Set in Svelte 5 
-    // if not using a specialized reactive collection, but $state(new Set()) 
-    // works if we replace the set or if Svelte 5 handles set mutations (it doesn't by default without Proxy).
-    // Actually, Svelte 5 $state with Set requires reassignment or using a reactive wrapper.
-    selectedChargeIds = new Set(selectedChargeIds);
-  }
-
-  function handleMakePayment() {
-    alert(`Payment of $${selectedTotal.toFixed(2)} processed!`);
-    // Mock update: mark selected as paid
-    items = items.map(item => {
-      if (selectedChargeIds.has(item.id)) {
-        return { ...item, status: 'paid' };
-      }
-      return item;
-    });
-    selectedChargeIds = new Set();
-  }
 </script>
 
 <svelte:head>
@@ -102,66 +78,75 @@
     <p class="text-5xl font-black text-red-600 mt-2">${outstandingBalance.toFixed(2)}</p>
   </div>
 
-  <!-- Items List -->
-  <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
-    <div class="divide-y divide-gray-100">
-      {#each items as item}
-        {@const isCharge = item.type === 'charge'}
-        {@const isUnpaid = item.status === 'unpaid'}
-        {@const isSelected = selectedChargeIds.has(item.id)}
-
-        <div class="p-4 flex items-center space-x-4 hover:bg-gray-50 transition-colors duration-150">
-          <div class="p-3 rounded-full {isCharge ? (isUnpaid ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600') : 'bg-green-100 text-green-600'}">
-            {#if isCharge}
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            {:else}
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            {/if}
-          </div>
-
-          <div class="flex-grow">
-            <h4 class="font-bold text-gray-800">{item.title}</h4>
-            <p class="text-sm text-gray-500">{item.date}</p>
-          </div>
-
-          <div class="flex items-center space-x-4">
-            <p class="font-black {isCharge ? 'text-red-600' : 'text-green-600'}">
-              {isCharge ? '-' : '+'}${item.amount.toFixed(2)}
-            </p>
-            
-            {#if isUnpaid}
-              <input 
-                type="checkbox" 
-                checked={isSelected}
-                onchange={() => toggleSelection(item.id)}
-                class="h-6 w-6 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-              />
-            {/if}
-          </div>
+  <!-- Unpaid Charges Section -->
+  <section class="mb-10">
+    <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 px-1">Unpaid Charges</h3>
+    <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
+      {#if unpaidCharges.length === 0}
+        <div class="p-8 text-center">
+          <p class="text-gray-400 font-bold italic text-sm">No unpaid charges. You're all caught up!</p>
         </div>
-      {/each}
-    </div>
-  </div>
-
-  <!-- Floating Payment Footer -->
-  {#if selectedChargeIds.size > 0}
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] p-4 z-20">
-      <div class="max-w-3xl mx-auto flex items-center justify-between">
-        <div>
-          <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Selected Total</p>
-          <p class="text-2xl font-black text-gray-900">${selectedTotal.toFixed(2)}</p>
+      {:else}
+        <div class="divide-y divide-gray-50">
+          {#each unpaidCharges as charge}
+            <div class="p-4 flex items-center space-x-4 hover:bg-gray-50 transition-colors">
+              <div class="p-3 rounded-2xl bg-orange-50 text-orange-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="flex-grow">
+                <h4 class="font-bold text-gray-800">{charge.externalName || `Game ${charge.gameId.substring(0, 5)}`}</h4>
+                <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">{new Date(charge.createdAt).toLocaleDateString()}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">Due</p>
+                <p class="text-lg font-black text-red-600">${charge.unpaid.toFixed(2)}</p>
+              </div>
+            </div>
+          {/each}
         </div>
-        <button 
-          onclick={handleMakePayment}
-          class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
-        >
-          Make Payment
-        </button>
-      </div>
+      {/if}
     </div>
-  {/if}
+  </section>
+
+  <!-- Recent Activity Section -->
+  <section>
+    <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 px-1">Recent Activity</h3>
+    <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
+      {#if recentActivity.length === 0}
+        <div class="p-8 text-center">
+          <p class="text-gray-400 font-bold italic text-sm">No recent activity recorded.</p>
+        </div>
+      {:else}
+        <div class="divide-y divide-gray-50">
+          {#each recentActivity as item}
+            {@const isCharge = item.type === 'charge'}
+            <div class="p-4 flex items-center space-x-4 hover:bg-gray-50 transition-colors">
+              <div class="p-2.5 rounded-xl {isCharge ? 'bg-gray-50 text-gray-400' : 'bg-green-50 text-green-600'}">
+                {#if isCharge}
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                {:else}
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V9m0 3v-1m0 4v-1m0-8a9 9 0 110 18 9 9 0 010-18z" />
+                  </svg>
+                {/if}
+              </div>
+              <div class="flex-grow">
+                <h4 class="text-sm font-bold text-gray-700">{item.title}</h4>
+                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{item.date}</p>
+              </div>
+              <div class="text-right">
+                <p class="font-black {isCharge ? 'text-gray-400' : 'text-green-600'}">
+                  {isCharge ? '-' : '+'}${item.amount.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  </section>
 </div>

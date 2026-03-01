@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/bouncy/bouncy-api/internal/application/users"
@@ -40,12 +41,14 @@ func RegisterAdminUserRoutes(r chi.Router, handler *UserHandler) {
 func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value(auth.ClaimsContextKey).(*auth.Claims)
 	if !ok || claims == nil {
+		slog.Error("Get current user failed: authentication required")
 		utils.WriteJSON(w, http.StatusUnauthorized, contract.ErrorResponse{Error: "authentication required"})
 		return
 	}
 
 	user, err := h.service.GetUserByID(claims.UserId)
 	if err != nil {
+		slog.Error("Get user by ID service failed", "userId", claims.UserId, "error", err)
 		utils.WriteJSON(w, http.StatusNotFound, contract.ErrorResponse{Error: "user not found"})
 		return
 	}
@@ -77,11 +80,13 @@ func (h *UserHandler) UpdateUserRoles(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateUserRolesRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		slog.Error("Failed to decode update user roles request", "userId", userID, "error", err)
 		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: "Invalid request body"})
 		return
 	}
 
 	if err := h.service.UpdateUserRoles(userID, req.Roles); err != nil {
+		slog.Error("Update user roles service failed", "userId", userID, "roles", req.Roles, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: "Failed to update user roles"})
 		return
 	}

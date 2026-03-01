@@ -7,9 +7,10 @@ import (
 
 func LeagueMemberToDomain(m persistence.LeagueMember) models.LeagueMember {
 	return models.LeagueMember{
-		PlayerID: m.UserID,
-		Role:     m.Role,
-		JoinedAt: m.JoinedAt,
+		PlayerID:   m.UserID,
+		PlayerName: m.User.Name,
+		Role:       m.Role,
+		JoinedAt:   m.JoinedAt,
 	}
 }
 

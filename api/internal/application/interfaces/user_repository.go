@@ -16,5 +16,6 @@ type UserRepository interface {
 	// Invitation methods
 	CreateInvitation(invitation *models.Invitation) error
 	GetInvitationByToken(token string) (*models.Invitation, error)
+	GetInvitationsByLeague(leagueID string) ([]models.Invitation, error)
 	MarkInvitationAsUsed(token string, usedAt time.Time) error
 }

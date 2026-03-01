@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/bouncy/bouncy-api/internal/application/leagues"
@@ -43,6 +44,7 @@ func (h *LeagueMemberHandler) ListMembers(w http.ResponseWriter, r *http.Request
 
 	members, err := h.service.ListMembers(leagueId)
 	if err != nil {
+		slog.Error("List members failed", "leagueId", leagueId, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -75,11 +77,13 @@ func (h *LeagueMemberHandler) AddMember(w http.ResponseWriter, r *http.Request) 
 	leagueId := chi.URLParam(r, "leagueId")
 
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		slog.Error("Failed to decode add member request", "leagueId", leagueId, "error", err)
 		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	if err := h.service.AddMember(leagueId, request.AddingUserId, request.UserId, request.Role); err != nil {
+		slog.Error("Add member service failed", "leagueId", leagueId, "userId", request.UserId, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -105,6 +109,7 @@ func (h *LeagueMemberHandler) RemoveMember(w http.ResponseWriter, r *http.Reques
 	// For actual implementation, you'd likely get the `removingUserId` from context
 
 	if err := h.service.RemoveMember(leagueId, memberId); err != nil {
+		slog.Error("Remove member failed", "leagueId", leagueId, "memberId", memberId, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -138,11 +143,13 @@ func (h *LeagueMemberHandler) UpdateRole(w http.ResponseWriter, r *http.Request)
 
 	var request UpdateMemberRoleRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		slog.Error("Failed to decode update role request", "leagueId", leagueId, "memberId", memberId, "error", err)
 		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	if err := h.service.UpdateRole(leagueId, memberId, request.Role); err != nil {
+		slog.Error("Update member role failed", "leagueId", leagueId, "memberId", memberId, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}

@@ -2,8 +2,6 @@
   import Header from '$lib/components/Header.svelte';
   import './layout.css';
   import { authService } from '$lib/services/auth.svelte';
-  import { page } from '$app/stores';
-  import { goto } from '$app/navigation';
   import { browser } from '$app/environment';
 
   let { children, data } = $props();

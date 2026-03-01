@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -42,12 +43,14 @@ func RegisterLeagueRoutes(r chi.Router, handler *LeagueHandler) {
 func (h *LeagueHandler) GetLeaguesForUser(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value(auth.ClaimsContextKey).(*auth.Claims)
 	if !ok || claims == nil {
+		slog.Error("Get leagues for user failed: authentication required")
 		utils.WriteJSON(w, http.StatusUnauthorized, contract.ErrorResponse{Error: "authentication required"})
 		return
 	}
 
 	userLeagues, err := h.service.GetLeaguesForUser(claims.UserId)
 	if err != nil {
+		slog.Error("Get leagues for user service failed", "userId", claims.UserId, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -71,6 +74,7 @@ func (h *LeagueHandler) GetLeague(w http.ResponseWriter, r *http.Request) {
 
 	game, err := h.service.GetLeague(id)
 	if err != nil {
+		slog.Error("Get league failed", "leagueId", id, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -99,6 +103,7 @@ type createLeagueRequest struct {
 func (h *LeagueHandler) CreateLeague(w http.ResponseWriter, r *http.Request) {
 	var req createLeagueRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		slog.Error("Failed to decode create league request", "error", err)
 		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -108,6 +113,7 @@ func (h *LeagueHandler) CreateLeague(w http.ResponseWriter, r *http.Request) {
 		req.Name,
 	)
 	if err != nil {
+		slog.Error("Create league service failed", "name", req.Name, "error", err)
 		utils.WriteJSON(w, http.StatusConflict, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -130,6 +136,7 @@ func (h *LeagueHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "leagueId")
 
 	if err := h.service.Delete(id); err != nil {
+		slog.Error("Delete league failed", "leagueId", id, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}

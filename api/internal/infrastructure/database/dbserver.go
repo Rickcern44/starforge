@@ -39,7 +39,7 @@ func (dbs *Service) Connect() error {
 	}
 
 	dbs.Database = db
-	slog.Info("Connected to database", dbs.dbName)
+	slog.With("database", dbs.dbName).Info("Connected to database")
 	return nil
 }
 
@@ -54,11 +54,13 @@ func (dbs *Service) UpdateDatabase() error {
 		&persistence.Payment{},
 		&persistence.PaymentAllocation{},
 		&persistence.GameCharge{},
+		&persistence.Invitation{},
 	)
 
 	if err != nil {
+		slog.Error(err.Error())
 		return err
 	}
-	fmt.Println("database schema has been updated")
+	slog.Info("Database Schema has been migrated successfully")
 	return nil
 }

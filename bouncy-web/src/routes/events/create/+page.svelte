@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { getLeagues } from '$lib/services/league';
   import { createGame } from '$lib/services/game';
   import type { League } from '$lib/models';
   import { authService } from '$lib/services/auth.svelte';

@@ -13,4 +13,5 @@ type LeagueMember struct {
 	PasswordHash string      `gorm:"type:varchar(255);not null" json:"-"`
 	JoinedAt     time.Time   `gorm:"autoCreateTime" json:"joinedAt"`
 	League       League      `gorm:"foreignKey:LeagueID;constraint:OnDelete:CASCADE" json:"-"`
+	User         User        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user"`
 }

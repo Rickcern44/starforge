@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/bouncy/bouncy-api/internal/application"
@@ -46,6 +47,7 @@ func (h *GameHandler) UpdateGame(w http.ResponseWriter, r *http.Request) {
 
 	var game models.Game
 	if err := json.NewDecoder(r.Body).Decode(&game); err != nil {
+		slog.Error("Failed to decode update game request", "gameId", gameId, "error", err)
 		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -54,6 +56,7 @@ func (h *GameHandler) UpdateGame(w http.ResponseWriter, r *http.Request) {
 
 	updatedGame, err := h.service.UpdateGame(&game)
 	if err != nil {
+		slog.Error("Update game service failed", "gameId", gameId, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -77,6 +80,7 @@ func (h *GameHandler) ListGames(w http.ResponseWriter, r *http.Request) {
 
 	games, err := h.service.GetGamesForLeague(leagueId)
 	if err != nil {
+		slog.Error("List games service failed", "leagueId", leagueId, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -100,6 +104,7 @@ func (h *GameHandler) GetGame(w http.ResponseWriter, r *http.Request) {
 
 	game, err := h.service.GetGameById(gameId)
 	if err != nil {
+		slog.Error("Get game service failed", "gameId", gameId, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -131,6 +136,7 @@ func (h *GameHandler) AddGame(w http.ResponseWriter, r *http.Request) {
 
 	var req CreateGameRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		slog.Error("Failed to decode add game request", "leagueId", leagueId, "error", err)
 		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -139,6 +145,7 @@ func (h *GameHandler) AddGame(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.service.Create(game)
 	if err != nil {
+		slog.Error("Create game service failed", "leagueId", leagueId, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -161,6 +168,7 @@ func (h *GameHandler) CancelGame(w http.ResponseWriter, r *http.Request) {
 	gameId := chi.URLParam(r, "gameId")
 
 	if err := h.service.CancelGame(gameId); err != nil {
+		slog.Error("Cancel game failed", "gameId", gameId, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}

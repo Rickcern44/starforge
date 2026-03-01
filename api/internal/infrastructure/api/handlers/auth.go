@@ -3,12 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/bouncy/bouncy-api/internal/application"
-	"github.com/bouncy/bouncy-api/internal/domain/models"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/contract"
-	"github.com/bouncy/bouncy-api/internal/infrastructure/api/middleware"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/auth"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/utils"
 	"github.com/go-chi/chi/v5"
@@ -27,12 +26,11 @@ func NewAuthHandler(service *application.AuthService) *AuthHandler {
 func RegisterAuthRoutes(r chi.Router, handler *AuthHandler) {
 	r.Post("/auth/login", handler.LoginHandler)
 	r.Post("/auth/register", handler.RegistrationHandler)
+}
 
-	// Admin routes
-	r.Group(func(r chi.Router) {
-		r.Use(middleware.RoleMiddleware(string(models.RoleAdmin)))
-		r.Post("/admin/invite", handler.InviteHandler)
-	})
+func RegisterAdminAuthRoutes(r chi.Router, handler *AuthHandler) {
+	r.Post("/admin/invite", handler.InviteHandler)
+	r.Get("/admin/league/{leagueId}/invitations", handler.ListLeagueInvitationsHandler)
 }
 
 type LoginRequest struct {
@@ -48,12 +46,14 @@ type LoginResponse struct {
 func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var request LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		slog.Error("Failed to decode login request", "error", err)
 		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: "Invalid request body"})
 		return
 	}
 
 	token, err := h.service.Login(request.Email, request.Password)
 	if err != nil {
+		slog.Error("Login failed", "email", request.Email, "error", err)
 		if errors.Is(err, application.ErrUserNotFound) || errors.Is(err, application.ErrInvalidCredentials) {
 			utils.WriteJSON(w, http.StatusUnauthorized, contract.ErrorResponse{Error: "Unable to complete login", Message: "Invalid email or password"})
 			return
@@ -79,18 +79,21 @@ type registrationResponse struct {
 func (h *AuthHandler) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	var request registrationRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		slog.Error("Failed to decode registration request", "error", err)
 		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: "Invalid request body"})
 		return
 	}
 
 	// We now require an invitation token for registration
 	if request.Token == "" {
+		slog.Error("Registration failed: missing invitation token", "email", request.Email)
 		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: "Invitation token is required"})
 		return
 	}
 
 	err := h.service.RegisterWithInvitation(request.Token, request.Name, request.Email, request.Password)
 	if err != nil {
+		slog.Error("Registration failed", "email", request.Email, "error", err)
 		if errors.Is(err, application.ErrUserAlreadyExists) {
 			http.Error(w, "User already exists", http.StatusConflict)
 			return
@@ -115,20 +118,43 @@ type InviteRequest struct {
 func (h *AuthHandler) InviteHandler(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value(auth.ClaimsContextKey).(*auth.Claims)
 	if !ok {
+		slog.Error("Invite failed: invalid user context")
 		utils.WriteJSON(w, http.StatusUnauthorized, contract.ErrorResponse{Error: "invalid user context"})
 		return
 	}
 
 	var request InviteRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		slog.Error("Failed to decode invite request", "error", err)
 		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: "Invalid request body"})
 		return
 	}
 
 	if err := h.service.InviteUser(request.Email, request.LeagueID, claims.UserId); err != nil {
+		slog.Error("Invite user failed", "email", request.Email, "leagueId", request.LeagueID, "invitedBy", claims.UserId, "error", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Invitation sent successfully"})
+}
+
+func (h *AuthHandler) ListLeagueInvitationsHandler(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value(auth.ClaimsContextKey).(*auth.Claims)
+	if !ok {
+		slog.Error("List invitations failed: invalid user context")
+		utils.WriteJSON(w, http.StatusUnauthorized, contract.ErrorResponse{Error: "invalid user context"})
+		return
+	}
+
+	leagueId := chi.URLParam(r, "leagueId")
+
+	invites, err := h.service.GetLeagueInvitations(leagueId, claims.UserId)
+	if err != nil {
+		slog.Error("List league invitations failed", "leagueId", leagueId, "userId", claims.UserId, "error", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, invites)
 }

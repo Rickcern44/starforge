@@ -12,12 +12,12 @@ type User struct {
 }
 
 type Invitation struct {
-	Token     string
-	Email     string
-	LeagueID  string
-	InvitedBy string
-	ExpiresAt time.Time
-	UsedAt    *time.Time
+	Token     string     `json:"token"`
+	Email     string     `json:"email"`
+	LeagueID  string     `json:"leagueId"`
+	InvitedBy string     `json:"invitedBy"`
+	ExpiresAt time.Time  `json:"expiresAt"`
+	UsedAt    *time.Time `json:"usedAt"`
 }
 
 func (i Invitation) IsValid() bool {

@@ -3,17 +3,16 @@ package models
 import "time"
 
 type Payment struct {
-	ID            string
-	UserID        *string // Nullable for unclaimed payments
-	ExternalName  string  // Name from spreadsheet if UserID is null
-	LeagueID      string
-	AmountInCents int
-	Method        PaymentMethod
-	ReceivedAt    time.Time
-	RecordedBy    string  // Admin ID
-	Reference     *string // Venmo note / spreadsheet row
-
-	Allocations []PaymentAllocation
+	ID            string              `json:"id"`
+	UserID        *string             `json:"userId"` // Nullable for unclaimed payments
+	ExternalName  string              `json:"externalName"`
+	LeagueID      string              `json:"leagueId"`
+	AmountInCents int                 `json:"amountInCents"`
+	Method        PaymentMethod       `json:"method"`
+	ReceivedAt    time.Time           `json:"receivedAt"`
+	RecordedBy    string              `json:"recordedBy"`
+	Reference     *string             `json:"reference"`
+	Allocations   []PaymentAllocation `json:"allocations"`
 }
 
 func (p Payment) UnallocatedAmount() int {

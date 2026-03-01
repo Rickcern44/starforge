@@ -40,6 +40,7 @@ func main() {
 	}
 
 	_ = dbServer.UpdateDatabase()
+	_ = dbServer.Seed()
 
 	app := container.NewAppContainer(dbServer.Database, settings)
 	routes.RegisterRoutes(chiServer.Router(), app.ToDependencies())

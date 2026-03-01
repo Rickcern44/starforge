@@ -46,7 +46,7 @@ func NewAppContainer(db *gorm.DB, settings *config.Config) *AppContainer {
 	emailService := email.NewMockEmailService()
 
 	jwtService := application.NewJwtService(settings.Auth.JwtSecret)
-	authService := application.NewAuthService(jwtService, authRepo, emailService, paymentsService)
+	authService := application.NewAuthService(jwtService, authRepo, emailService, paymentsService, leagueMemberRepo)
 
 	return &AppContainer{
 		DB:                    db,

@@ -27,14 +27,16 @@ type AuthService struct {
 	userRepo       interfaces.UserRepository
 	emailService   interfaces.EmailService
 	paymentService *payments.Service
+	leagueRepo     interfaces.LeagueMemberRepository
 }
 
-func NewAuthService(jwt *JwtService, userRepo interfaces.UserRepository, email interfaces.EmailService, payments *payments.Service) *AuthService {
+func NewAuthService(jwt *JwtService, userRepo interfaces.UserRepository, email interfaces.EmailService, payments *payments.Service, leagueRepo interfaces.LeagueMemberRepository) *AuthService {
 	return &AuthService{
 		jwt:            jwt,
 		userRepo:       userRepo,
 		emailService:   email,
 		paymentService: payments,
+		leagueRepo:     leagueRepo,
 	}
 }
 
@@ -56,6 +58,14 @@ func (s *AuthService) Login(email, password string) (string, error) {
 }
 
 func (s *AuthService) InviteUser(email, leagueID, invitedBy string) error {
+	isAdmin, err := s.leagueRepo.IsAdmin(leagueID, invitedBy)
+	if err != nil {
+		return err
+	}
+	if !isAdmin {
+		return fmt.Errorf("insufficient permissions to invite to this league")
+	}
+
 	token := uuid.NewString()
 	inv := &models.Invitation{
 		Token:     token,
@@ -71,6 +81,18 @@ func (s *AuthService) InviteUser(email, leagueID, invitedBy string) error {
 
 	// For now, we'll assume the league name is just "Bouncy League" or fetch it later
 	return s.emailService.SendInvitation(email, token, "Bouncy League")
+}
+
+func (s *AuthService) GetLeagueInvitations(leagueID, requesterID string) ([]models.Invitation, error) {
+	isAdmin, err := s.leagueRepo.IsAdmin(leagueID, requesterID)
+	if err != nil {
+		return nil, err
+	}
+	if !isAdmin {
+		return nil, fmt.Errorf("insufficient permissions to view invitations for this league")
+	}
+
+	return s.userRepo.GetInvitationsByLeague(leagueID)
 }
 
 func (s *AuthService) RegisterWithInvitation(token, name, email, password string) error {
