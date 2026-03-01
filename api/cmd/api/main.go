@@ -28,7 +28,7 @@ import (
 // @name Authorization
 // @host localhost:3000
 func main() {
-	settings, err := config.LoadConfig(os.Getenv("APP_CONFIG_PATH"))
+	settings, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}

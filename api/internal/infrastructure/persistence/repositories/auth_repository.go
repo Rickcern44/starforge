@@ -23,6 +23,14 @@ func (r *AuthRepository) GetUserByEmail(email string) (*models.User, error) {
 	return mappers.UserToDomain(user), nil
 }
 
+func (r *AuthRepository) FindByName(name string) (*models.User, error) {
+	var user persistence.User
+	if err := r.db.Where("name = ?", name).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return mappers.UserToDomain(user), nil
+}
+
 func (r *AuthRepository) CreateUser(user *models.User) error {
 	persistenceUser := mappers.UserToPersistence(user)
 	return r.db.Create(persistenceUser).Error

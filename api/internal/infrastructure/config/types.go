@@ -20,5 +20,5 @@ type DatabaseConfig struct {
 type AuthConfig struct {
 	JwtSecret     string
 	RefreshSecret string
-	Ttl           int `toml:"jwt_ttl"`
+	Ttl           int `koanf:"jwt_ttl"`
 }

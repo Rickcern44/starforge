@@ -6,4 +6,7 @@ type PaymentsRepository interface {
 	ListByLeague(leagueID string) ([]models.Payment, error)
 	Add(payment *models.Payment) error
 	AddAllocation(paymentID string, allocation *models.PaymentAllocation) error
+	CreateCharge(charge *models.GameCharge) error
+	ListChargesByUser(userID string) ([]models.GameCharge, error)
+	ListChargesByExternalName(name string) ([]models.GameCharge, error)
 }

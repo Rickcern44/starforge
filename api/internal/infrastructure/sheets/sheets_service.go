@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/bouncy/bouncy-api/internal/application"
+	"github.com/bouncy/bouncy-api/internal/application/payments"
+	"github.com/bouncy/bouncy-api/internal/application/users"
 	"github.com/bouncy/bouncy-api/internal/domain/models"
 	"github.com/xuri/excelize/v2"
 )
@@ -138,23 +140,125 @@ func (service *Service) GetTotalDates() ([]string, error) {
 	return dates, nil
 }
 
-func (service *Service) CreateMissingGames(dates []string, gameService *application.GameService) error {
-	for _, date := range dates {
+func (service *Service) CreateMissingGames(dates []string, gameService *application.GameService) ([]*models.Game, error) {
+	existingGames, err := gameService.GetGamesForLeague(service.LeagueId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch existing games: %w", err)
+	}
 
+	var gamesToCreate []*models.Game
+	for _, date := range dates {
 		parsedTime := parseSpreadsheetDate(date)
 
-		game := &models.Game{
-			LeagueID:    service.LeagueId,
-			StartTime:   parsedTime,
-			Location:    "Fairview Wellness Center",
-			CostInCents: service.GameCostInCents,
-			IsCanceled:  false,
-			Attendance:  nil,
-			Charges:     nil,
+		exists := false
+		for _, existing := range existingGames {
+			// Check if a game exists within the same hour (simple duplicate check)
+			if existing.StartTime.Truncate(time.Hour).Equal(parsedTime.Truncate(time.Hour)) {
+				exists = true
+				break
+			}
 		}
 
+		if !exists {
+			game := models.CreateGameFromData(service.LeagueId, "Fairview Wellness Center", service.GameCostInCents, parsedTime)
+			gamesToCreate = append(gamesToCreate, game)
+		}
+	}
+
+	return gamesToCreate, nil
+}
+
+func (service *Service) ExecuteGameCreation(games []*models.Game, gameService *application.GameService) error {
+	for _, game := range games {
 		if _, err := gameService.Create(game); err != nil {
-			slog.Error(err.Error())
+			return fmt.Errorf("failed to create game for %v: %w", game.StartTime, err)
+		}
+	}
+	return nil
+}
+
+func (service *Service) IdentifyNewCharges(
+	attendanceData []AttendanceData,
+	games []*models.Game,
+	gameService *application.GameService,
+	paymentsService *payments.Service,
+	userService *users.Service,
+) ([]*models.GameCharge, error) {
+	var chargesToCreate []*models.GameCharge
+
+	// Create a map of date -> Game ID for quick lookup
+	gameMap := make(map[string]string)
+	for _, g := range games {
+		key := g.StartTime.Format("2-Jan")
+		gameMap[key] = g.ID
+	}
+
+	// Fetch all existing charges for this league to optimize duplicate checking
+	// (Implementation detail: We'll assume paymentsService.ListByLeague is available or similar)
+
+	// Cache user lookups by name
+	userCache := make(map[string]*string)
+
+	for _, data := range attendanceData {
+		// 1. Try to find User ID from name
+		var userID *string
+		if cachedID, ok := userCache[data.Name]; ok {
+			userID = cachedID
+		} else {
+			user, err := userService.FindByName(data.Name)
+			if err == nil && user != nil {
+				id := user.ID
+				userID = &id
+			}
+			userCache[data.Name] = userID
+		}
+
+		// 2. Get existing charges for this specific user/name to avoid duplicates
+		var existingCharges []models.GameCharge
+		if userID != nil {
+			ec, err := paymentsService.ListChargesByUser(*userID)
+			if err == nil {
+				existingCharges = append(existingCharges, ec...)
+			}
+		}
+
+		// ALWAYS check for unclaimed charges by name as well
+		unclaimed, err := paymentsService.ListChargesByExternalName(data.Name)
+		if err == nil {
+			existingCharges = append(existingCharges, unclaimed...)
+		}
+
+		for dateLabel, value := range data.Dates {
+			trimmedVal := strings.ToLower(strings.TrimSpace(value))
+			if trimmedVal == "x" {
+				gameID, ok := gameMap[dateLabel]
+				if !ok {
+					continue
+				}
+
+				// Check if charge already exists
+				duplicate := false
+				for _, ec := range existingCharges {
+					if ec.GameID == gameID {
+						duplicate = true
+						break
+					}
+				}
+
+				if !duplicate {
+					charge := models.CreateGameCharge(gameID, userID, data.Name, service.GameCostInCents)
+					chargesToCreate = append(chargesToCreate, charge)
+				}
+			}
+		}
+	}
+
+	return chargesToCreate, nil
+}
+
+func (service *Service) ExecuteChargeCreation(charges []*models.GameCharge, paymentsService *payments.Service) error {
+	for _, c := range charges {
+		if err := paymentsService.CreateCharge(c); err != nil {
 			return err
 		}
 	}
@@ -162,7 +266,7 @@ func (service *Service) CreateMissingGames(dates []string, gameService *applicat
 }
 
 func parseSpreadsheetDate(date string) time.Time {
-	layout := "02-Jan"
+	layout := "2-Jan"
 	now := time.Now()
 	parsed, err := time.Parse(layout, date)
 

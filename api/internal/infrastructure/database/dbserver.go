@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/bouncy/bouncy-api/internal/infrastructure/config"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/persistence"
@@ -29,16 +30,16 @@ func NewDatabaseService(settings *config.Config) *Service {
 }
 
 func (dbs *Service) Connect() error {
-	fmt.Println("Connecting to database...")
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", dbs.host, dbs.user, dbs.pass, dbs.dbName, dbs.port)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
+		slog.Error(err.Error())
 		return err
 	}
 
 	dbs.Database = db
-	fmt.Printf("Connected to %v:%v\n", dbs.host, dbs.dbName)
+	slog.Info("Connected to database", dbs.dbName)
 	return nil
 }
 

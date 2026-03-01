@@ -1,72 +1,113 @@
 package config
 
 import (
-	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/BurntSushi/toml"
+	"github.com/joho/godotenv"
+	"github.com/knadh/koanf/parsers/toml/v2"
+	"github.com/knadh/koanf/providers/confmap"
+	"github.com/knadh/koanf/providers/env"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
 )
 
-var defaultConfig = Config{
-	Database: &DatabaseConfig{
-		Password: os.Getenv("POSTGRES_PASS"),
-	},
-	Auth: &AuthConfig{
-		JwtSecret:     os.Getenv("JWT_SECRET"),
-		RefreshSecret: os.Getenv("JWT_REFRESH_SECRET"),
-	},
-}
+var k = koanf.New(".")
 
-// LoadConfig load a global configuration based off an input path
-func LoadConfig(configFilePath string) (*Config, error) {
-	config := defaultConfig
+// LoadConfig loads configuration using this hierarchy (last loaded wins):
+// 1. Code-defined defaults
+// 2. TOML file (optional, only if path is provided)
+// 3. Environment variables (highest priority)
+func LoadConfig() (*Config, error) {
+	projectRoot, _ := getRootDirectory()
 
-	if configFilePath == "" {
-		return &config, nil
+	// 1. Load .env file if present (sets env vars for the process)
+	if projectRoot != "" {
+		_ = godotenv.Load(filepath.Join(projectRoot, ".env"))
+	} else {
+		_ = godotenv.Load()
 	}
 
-	// If the path is relative, resolve it from the project root
-	if !filepath.IsAbs(configFilePath) {
-		root, err := findProjectRoot()
-		if err == nil {
-			configFilePath = filepath.Join(root, configFilePath)
+	// 2. Load Defaults
+	_ = k.Load(confmap.Provider(map[string]interface{}{
+		"server.port":         3000,
+		"database.host":       "localhost",
+		"database.port":       "5432",
+		"database.username":   "postgres",
+		"database.password":   "password",
+		"database.database":   "bouncy",
+		"auth.jwt_secret":     "super-secret",
+		"auth.refresh_secret": "refresh-secret",
+		"auth.jwt_ttl":        3600,
+	}, "."), nil)
+
+	// 3. Optional TOML override
+	configPath := os.Getenv("APP_CONFIG_PATH")
+	if configPath != "" {
+		if !filepath.IsAbs(configPath) && projectRoot != "" {
+			configPath = filepath.Join(projectRoot, configPath)
+		}
+		if err := k.Load(file.Provider(configPath), toml.Parser()); err != nil {
+			return nil, fmt.Errorf("failed to load config file at %s: %w", configPath, err)
 		}
 	}
 
-	info, err := os.Stat(configFilePath)
-	if os.IsNotExist(err) {
-		return nil, fmt.Errorf("config file does not exist at: %s", configFilePath)
-	}
+	// 4. Environment variables (Highest priority)
+	// We map flat env vars (e.g. DB_PORT) to nested struct fields (database.port)
+	err := k.Load(env.Provider("", ".", func(s string) string {
+		// Custom mapping for legacy environment variables
+		mapping := map[string]string{
+			"PORT":               "server.port",
+			"DB_HOST":            "database.host",
+			"DB_PORT":            "database.port",
+			"DB_USER":            "database.username",
+			"POSTGRES_PASS":      "database.password",
+			"DB_NAME":            "database.database",
+			"JWT_SECRET":         "auth.jwt_secret",
+			"JWT_REFRESH_SECRET": "auth.refresh_secret",
+			"JWT_TTL":            "auth.jwt_ttl",
+		}
+		if mapped, ok := mapping[s]; ok {
+			return mapped
+		}
+		// Fallback: lowercase and replace underscores for others (e.g. SERVER_PORT -> server.port)
+		return strings.ReplaceAll(strings.ToLower(s), "_", ".")
+	}), nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error loading env vars: %w", err)
 	}
 
-	if info.IsDir() {
-		return nil, fmt.Errorf("config path is a directory, not a file: %s", configFilePath)
+	// Unmarshal into the struct
+	config := &Config{}
+	if err := k.Unmarshal("", config); err != nil {
+		return nil, fmt.Errorf("error unmarshaling config: %w", err)
 	}
 
-	if _, err := toml.DecodeFile(configFilePath, &config); err != nil {
-		return nil, err
-	}
-	return &config, nil
+	return config, nil
 }
 
-func findProjectRoot() (string, error) {
+func getRootDirectory() (string, error) {
 	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
+	marker := "go.mod"
 
+	if err != nil {
+		slog.Error(err.Error())
+	}
 	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir, nil
+		// Check if the marker file exists in the current directory
+		markerPath := filepath.Join(dir, marker)
+		if _, err := os.Stat(markerPath); err == nil {
+			return dir, nil // Found the project root
 		}
 
+		// Move one directory up
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			return "", errors.New("could not find project root (go.mod)")
+			// Reached filesystem root without finding marker
+			return "", fmt.Errorf("project root not found (no %s)", marker)
 		}
 		dir = parent
 	}

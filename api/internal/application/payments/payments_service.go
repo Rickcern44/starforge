@@ -24,3 +24,15 @@ func (s *Service) Add(payment *models.Payment) error {
 func (s *Service) AddAllocation(paymentID string, allocation *models.PaymentAllocation) error {
 	return s.repo.AddAllocation(paymentID, allocation)
 }
+
+func (s *Service) CreateCharge(charge *models.GameCharge) error {
+	return s.repo.CreateCharge(charge)
+}
+
+func (s *Service) ListChargesByUser(userID string) ([]models.GameCharge, error) {
+	return s.repo.ListChargesByUser(userID)
+}
+
+func (s *Service) ListChargesByExternalName(name string) ([]models.GameCharge, error) {
+	return s.repo.ListChargesByExternalName(name)
+}

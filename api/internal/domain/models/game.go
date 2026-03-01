@@ -33,3 +33,19 @@ func CreateGame(leagueId, location string, costInCents int) *Game {
 		Charges:     make([]GameCharge, 0),
 	}
 }
+
+func CreateGameFromData(leagueId, location string, costInCents int, time time.Time) *Game {
+
+	gameId, _ := uuid.NewV7()
+
+	return &Game{
+		ID:          gameId.String(),
+		LeagueID:    leagueId,
+		StartTime:   time,
+		Location:    location,
+		CostInCents: costInCents,
+		IsCanceled:  false,
+		Attendance:  make([]GameAttendance, 0),
+		Charges:     make([]GameCharge, 0),
+	}
+}
