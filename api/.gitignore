@@ -9,6 +9,5 @@
 .infra/
 
 bin/
-dist/
 # Added by goreleaser init:
 dist/
