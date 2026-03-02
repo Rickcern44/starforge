@@ -36,10 +36,12 @@ export async function createGame(gameData: {
   location: string;
   startTime: string;
   costInCents: number;
-}): Promise<Game | null> {
+  isRecurring?: boolean;
+  recurrenceInterval?: string;
+}): Promise<Game | Game[] | null> {
   try {
-    const game = await api.post('game', gameData);
-    return game as Game;
+    const game = await api.post(`league/${gameData.leagueId}/games`, gameData);
+    return game as Game | Game[];
   } catch (error) {
     console.error('Error creating game:', error);
     return null;

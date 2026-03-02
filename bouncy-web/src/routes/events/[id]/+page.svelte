@@ -33,8 +33,10 @@
 
   let isPastGame = $derived.by(() => {
     if (!game) return false;
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const gTime = game.startTime instanceof Date ? game.startTime.getTime() : new Date(game.startTime).getTime();
-    return gTime < new Date().getTime();
+    return gTime < startOfToday;
   });
 
   let canEditRSVP = $derived(!isPastGame || isAdmin);

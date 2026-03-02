@@ -26,7 +26,10 @@
 
   let upcomingGames = $derived.by(() => {
     let games: Game[] = [];
-    const now = new Date().getTime();
+    const now = new Date();
+    // Set to start of today to ensure today's evening games are included
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).getTime();
     
     if (selectedLeagueName === 'All Leagues') {
       allLeagues.forEach((league) => {
@@ -44,7 +47,7 @@
     return games
       .filter(g => {
         const gTime = g.startTime instanceof Date ? g.startTime.getTime() : new Date(g.startTime).getTime();
-        return gTime >= now;
+        return gTime >= startOfToday && gTime <= oneWeekFromNow;
       })
       .sort((a, b) => {
         const aTime = a.startTime instanceof Date ? a.startTime.getTime() : new Date(a.startTime).getTime();

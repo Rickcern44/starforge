@@ -7,7 +7,7 @@ export interface Payment {
   userId?: string | null;
   externalName: string;
   leagueId: string;
-  amountInCents: number;
+  amountCents: number;
   method: PaymentMethod;
   receivedAt: string | Date;
   recordedBy: string;

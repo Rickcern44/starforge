@@ -3,6 +3,7 @@
   import type { League } from '$lib/models';
   import { authService } from '$lib/services/auth.svelte';
   import { goto } from '$app/navigation';
+  import { toastService } from '$lib/services/toast.svelte';
 
   let { data } = $props();
 
@@ -51,16 +52,18 @@
     
     const success = await createGame({
       leagueId: selectedLeagueId,
-      location: title, // Using title as location for now to match API expectations if location is required
+      location: title,
       startTime,
-      costInCents: Math.round(price * 100)
+      costInCents: Math.round(price * 100),
+      isRecurring,
+      recurrenceInterval
     });
 
     if (success) {
-      alert('Event created successfully!');
+      toastService.success(isRecurring ? 'Recurring events created successfully!' : 'Event created successfully!');
       goto('/');
     } else {
-      alert('Failed to create event.');
+      toastService.error('Failed to create event.');
     }
     isLoading = false;
   }

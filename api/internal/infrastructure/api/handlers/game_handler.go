@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/bouncy/bouncy-api/internal/application"
 	"github.com/bouncy/bouncy-api/internal/domain/models"
@@ -114,8 +115,11 @@ func (h *GameHandler) GetGame(w http.ResponseWriter, r *http.Request) {
 
 // CreateGameRequest represents the request body for creating a new game.
 type CreateGameRequest struct {
-	Location    string `json:"location"`
-	CostInCents int    `json:"costInCents"`
+	Location           string    `json:"location"`
+	CostInCents        int       `json:"costInCents"`
+	StartTime          time.Time `json:"startTime"`
+	IsRecurring        bool      `json:"isRecurring"`
+	RecurrenceInterval string    `json:"recurrenceInterval"`
 }
 
 // AddGame handles adding a new game to a league.
@@ -141,7 +145,18 @@ func (h *GameHandler) AddGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	game := models.CreateGame(leagueId, req.Location, req.CostInCents)
+	if req.IsRecurring {
+		games, err := h.service.CreateRecurringGames(leagueId, req.Location, req.CostInCents, req.StartTime, req.RecurrenceInterval, 10) // default 10 occurrences
+		if err != nil {
+			slog.Error("Create recurring games service failed", "leagueId", leagueId, "error", err)
+			utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
+			return
+		}
+		utils.WriteJSON(w, http.StatusOK, games)
+		return
+	}
+
+	game := models.CreateGameFromData(leagueId, req.Location, req.CostInCents, req.StartTime)
 
 	result, err := h.service.Create(game)
 	if err != nil {

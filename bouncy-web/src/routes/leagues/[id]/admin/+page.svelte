@@ -44,14 +44,28 @@
   });
 
   let unallocatedPayments = $derived(payments.filter(p => {
-    const allocated = p.allocations.reduce((sum, a) => sum + a.amountInCents, 0);
-    return allocated < p.amountInCents;
+    const allocated = p.allocations?.reduce((sum, a) => sum + a.amountInCents, 0) || 0;
+    return allocated < p.amountCents;
   }));
 
   let unpaidCharges = $derived(allCharges.filter(c => {
-    const paid = c.allocations.reduce((sum, a) => sum + a.amountInCents, 0);
+    const paid = c.allocations?.reduce((sum, a) => sum + a.amountInCents, 0) || 0;
     return paid < c.amountCents;
   }));
+
+  function getMemberBalance(playerId: string) {
+    let balanceCents = 0;
+    
+    // Sum unpaid portions of all charges for this user in this league
+    allCharges.forEach(charge => {
+      if (charge.userId === playerId) {
+        const paid = charge.allocations?.reduce((sum, a) => sum + a.amountInCents, 0) || 0;
+        balanceCents += (charge.amountCents - paid);
+      }
+    });
+
+    return balanceCents / 100;
+  }
 
   async function handleInvite() {
     if (!inviteEmail) return;
@@ -122,12 +136,12 @@
   }
 
   function getUnallocatedAmount(payment: Payment) {
-    const allocated = payment.allocations.reduce((sum, a) => sum + a.amountInCents, 0);
-    return (payment.amountInCents - allocated) / 100;
+    const allocated = payment.allocations?.reduce((sum, a) => sum + a.amountInCents, 0) || 0;
+    return (payment.amountCents - allocated) / 100;
   }
 
   function getUnpaidAmount(charge: GameCharge) {
-    const paid = charge.allocations.reduce((sum, a) => sum + a.amountInCents, 0);
+    const paid = charge.allocations?.reduce((sum, a) => sum + a.amountInCents, 0) || 0;
     return (charge.amountCents - paid) / 100;
   }
 </script>
@@ -244,11 +258,13 @@
               <tr class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 <th class="px-6 py-4">Name</th>
                 <th class="px-6 py-4">Role</th>
+                <th class="px-6 py-4">Balance</th>
                 <th class="px-6 py-4">Joined</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
               {#each league.members as member}
+                {@const balance = getMemberBalance(member.playerId)}
                 <tr class="group hover:bg-gray-50 transition-colors">
                   <td class="px-6 py-4">
                     <p class="text-sm font-bold text-gray-900">{member.playerName}</p>
@@ -263,6 +279,9 @@
                     >
                       {member.role}
                     </span>
+                  </td>
+                  <td class="px-6 py-4 text-sm font-black {balance > 0 ? 'text-red-600' : 'text-green-600'}">
+                    ${balance.toFixed(2)}
                   </td>
                   <td class="px-6 py-4 text-sm font-medium text-gray-400">{new Date(member.joinedAt).toLocaleDateString()}</td>
                 </tr>
@@ -395,7 +414,7 @@
                     <p class="text-[10px] text-gray-400 italic">"{payment.reference}"</p>
                   {/if}
                 </td>
-                <td class="px-6 py-4 text-sm font-black text-gray-900">${(payment.amountInCents / 100).toFixed(2)}</td>
+                <td class="px-6 py-4 text-sm font-black text-gray-900">${(payment.amountCents / 100).toFixed(2)}</td>
                 <td class="px-6 py-4">
                   {#if unallocated === 0}
                     <span class="px-2 py-1 bg-green-50 text-green-600 rounded-md text-[9px] font-black uppercase tracking-widest">Fully Allocated</span>
