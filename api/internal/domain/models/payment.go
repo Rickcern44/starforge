@@ -7,7 +7,7 @@ type Payment struct {
 	UserID        *string             `json:"userId"` // Nullable for unclaimed payments
 	ExternalName  string              `json:"externalName"`
 	LeagueID      string              `json:"leagueId"`
-	AmountInCents int                 `json:"amountInCents"`
+	AmountCents   int                 `json:"amountCents"`
 	Method        PaymentMethod       `json:"method"`
 	ReceivedAt    time.Time           `json:"receivedAt"`
 	RecordedBy    string              `json:"recordedBy"`
@@ -20,7 +20,7 @@ func (p Payment) UnallocatedAmount() int {
 	for _, a := range p.Allocations {
 		allocated += a.AmountInCents
 	}
-	return p.AmountInCents - allocated
+	return p.AmountCents - allocated
 }
 
 func CreatePayment(userID *string, externalName string, leagueID string, amount int, method PaymentMethod, reference *string) *Payment {
@@ -28,7 +28,7 @@ func CreatePayment(userID *string, externalName string, leagueID string, amount 
 		UserID:        userID,
 		ExternalName:  externalName,
 		LeagueID:      leagueID,
-		AmountInCents: amount,
+		AmountCents:   amount,
 		Method:        method,
 		ReceivedAt:    time.Now(),
 		Reference:     reference,

@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/bouncy/bouncy-api/internal/application/interfaces"
+	"github.com/bouncy/bouncy-api/internal/domain/interfaces"
 	"github.com/bouncy/bouncy-api/internal/domain/models"
 	"github.com/google/uuid"
 )
@@ -41,48 +41,70 @@ func (s *Service) Add(payment *models.Payment) error {
 		return err
 	}
 
-	// Auto-allocate if the payment is linked to a user
-	if payment.UserID != nil {
-		unpaidCharges, err := s.repo.ListUnpaidChargesByUser(*payment.UserID)
-		if err != nil {
-			slog.Error("Failed to list unpaid charges for auto-allocation", "userId", *payment.UserID, "error", err)
-			return nil // We don't fail the payment add if allocation fails
-		}
+	slog.Info("Attempting auto-allocation for payment", "paymentId", payment.ID, "userId", payment.UserID, "externalName", payment.ExternalName)
 
-		remainingPayment := payment.AmountInCents
-		for _, charge := range unpaidCharges {
-			if remainingPayment <= 0 {
-				break
-			}
+	var unpaidCharges []models.GameCharge
+	var err error
 
-			// Calculate how much is left to pay on this charge
-			alreadyPaid := 0
-			for _, a := range charge.Allocations {
-				alreadyPaid += a.AmountInCents
-			}
-			needed := charge.AmountCents - alreadyPaid
+	// Auto-allocate: Prefer UserID, fallback to ExternalName
+	if payment.UserID != nil && *payment.UserID != "" {
+		unpaidCharges, err = s.repo.ListUnpaidChargesByUser(*payment.UserID)
+	} else if payment.ExternalName != "" {
+		unpaidCharges, err = s.repo.ListUnpaidChargesByExternalName(payment.ExternalName)
+	}
 
-			allocationAmount := needed
-			if remainingPayment < needed {
-				allocationAmount = remainingPayment
-			}
+	if err != nil {
+		slog.Error("Failed to list unpaid charges for auto-allocation", "paymentId", payment.ID, "error", err)
+		return nil
+	}
 
-			allocation := &models.PaymentAllocation{
-				PaymentID:     payment.ID,
-				GameChargeID:  charge.ID,
-				AmountInCents: allocationAmount,
-			}
+	slog.Info("Found unpaid charges for allocation", "count", len(unpaidCharges))
 
-			if err := s.repo.AddAllocation(payment.ID, allocation); err != nil {
-				slog.Error("Failed to auto-allocate payment", "paymentId", payment.ID, "chargeId", charge.ID, "error", err)
-				continue
-			}
-
-			remainingPayment -= allocationAmount
-		}
+	if len(unpaidCharges) > 0 {
+		s.allocateToCharges(payment, unpaidCharges)
 	}
 
 	return nil
+}
+
+func (s *Service) allocateToCharges(payment *models.Payment, charges []models.GameCharge) {
+	remainingPayment := payment.AmountCents
+	for _, charge := range charges {
+		if remainingPayment <= 0 {
+			break
+		}
+
+		// Calculate how much is left to pay on this charge
+		alreadyPaid := 0
+		for _, a := range charge.Allocations {
+			alreadyPaid += a.AmountInCents
+		}
+		needed := charge.AmountCents - alreadyPaid
+
+		slog.Info("Processing charge for allocation", "chargeId", charge.ID, "neededCents", needed, "remainingPaymentCents", remainingPayment)
+
+		if needed <= 0 {
+			continue
+		}
+
+		allocationAmount := needed
+		if remainingPayment < needed {
+			allocationAmount = remainingPayment
+		}
+
+		allocation := &models.PaymentAllocation{
+			PaymentID:     payment.ID,
+			GameChargeID:  charge.ID,
+			AmountInCents: allocationAmount,
+		}
+
+		if err := s.repo.AddAllocation(payment.ID, allocation); err != nil {
+			slog.Error("Failed to auto-allocate payment", "paymentId", payment.ID, "chargeId", charge.ID, "error", err)
+			continue
+		}
+
+		remainingPayment -= allocationAmount
+	}
 }
 
 func (s *Service) AddAllocation(paymentID string, allocation *models.PaymentAllocation) error {

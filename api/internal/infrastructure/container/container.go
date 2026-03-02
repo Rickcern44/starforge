@@ -3,10 +3,10 @@ package container
 import (
 	"github.com/bouncy/bouncy-api/internal/application"
 	"github.com/bouncy/bouncy-api/internal/application/game_attendances"
-	"github.com/bouncy/bouncy-api/internal/application/interfaces"
 	"github.com/bouncy/bouncy-api/internal/application/leagues"
 	"github.com/bouncy/bouncy-api/internal/application/payments"
 	"github.com/bouncy/bouncy-api/internal/application/users"
+	"github.com/bouncy/bouncy-api/internal/domain/interfaces"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/dependencies"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/config"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/email"
@@ -40,7 +40,7 @@ func NewAppContainer(db *gorm.DB, settings *config.Config) *AppContainer {
 	leagueMemberService := leagues.NewLeagueMemberService(leagueMemberRepo)
 	gameService := application.NewGameService(gameRepo)
 	userService := users.NewUserService(authRepo)
-	gameAttendanceService := game_attendances.NewGameAttendanceService(gameAttendanceRepo)
+	gameAttendanceService := game_attendances.NewGameAttendanceService(gameAttendanceRepo, gameRepo, paymentsRepo)
 	paymentsService := payments.NewPaymentsService(paymentsRepo)
 
 	emailService := email.NewMockEmailService()

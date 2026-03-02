@@ -59,13 +59,13 @@ func persistenceToDomainPayment(p persistence.Payment) models.Payment {
 		allocations[i] = models.PaymentAllocation{
 			PaymentID:     a.PaymentID,
 			GameChargeID:  a.GameChargeID,
-			AmountInCents: a.AmountInCents,
+			AmountInCents: a.AmountCents,
 		}
 	}
 
 	return models.Payment{
 		ID:            p.ID,
-		AmountInCents: p.AmountCents,
+		AmountCents:   p.AmountCents,
 		UserID:        p.UserID,
 		ExternalName:  p.ExternalName,
 		LeagueID:      p.LeagueID,
@@ -79,7 +79,7 @@ func persistenceToDomainPayment(p persistence.Payment) models.Payment {
 func (r *PaymentsRepository) Add(payment *models.Payment) error {
 	p := &persistence.Payment{
 		Base:         persistence.Base{ID: payment.ID},
-		AmountCents:  payment.AmountInCents,
+		AmountCents:  payment.AmountCents,
 		UserID:       payment.UserID,
 		ExternalName: payment.ExternalName,
 		LeagueID:     payment.LeagueID,
@@ -93,9 +93,9 @@ func (r *PaymentsRepository) Add(payment *models.Payment) error {
 
 func (r *PaymentsRepository) AddAllocation(paymentID string, allocation *models.PaymentAllocation) error {
 	a := &persistence.PaymentAllocation{
-		PaymentID:     paymentID,
-		GameChargeID:  allocation.GameChargeID,
-		AmountInCents: allocation.AmountInCents,
+		PaymentID:    paymentID,
+		GameChargeID: allocation.GameChargeID,
+		AmountCents:  allocation.AmountInCents,
 	}
 	return r.db.Create(a).Error
 }
@@ -113,7 +113,7 @@ func (r *PaymentsRepository) CreateCharge(charge *models.GameCharge) error {
 
 func (r *PaymentsRepository) ListChargesByUser(userID string) ([]models.GameCharge, error) {
 	var charges []persistence.GameCharge
-	if err := r.db.Preload("Allocations").Where("user_id = ?", userID).Find(&charges).Error; err != nil {
+	if err := r.db.Preload("Allocations").Preload("Game").Where("user_id = ?", userID).Find(&charges).Error; err != nil {
 		return nil, err
 	}
 
@@ -126,9 +126,7 @@ func (r *PaymentsRepository) ListChargesByUser(userID string) ([]models.GameChar
 
 func (r *PaymentsRepository) ListUnpaidChargesByUser(userID string) ([]models.GameCharge, error) {
 	var charges []persistence.GameCharge
-	// We load all charges for the user and filter in-memory for simplicity,
-	// or we could use a complex SQL JOIN/Subquery to find charges where SUM(allocations) < amount_cents.
-	if err := r.db.Preload("Allocations").Where("user_id = ?", userID).Order("created_at asc").Find(&charges).Error; err != nil {
+	if err := r.db.Preload("Allocations").Preload("Game").Where("user_id = ?", userID).Order("created_at asc").Find(&charges).Error; err != nil {
 		return nil, err
 	}
 
@@ -144,7 +142,7 @@ func (r *PaymentsRepository) ListUnpaidChargesByUser(userID string) ([]models.Ga
 
 func (r *PaymentsRepository) ListChargesByExternalName(name string) ([]models.GameCharge, error) {
 	var charges []persistence.GameCharge
-	if err := r.db.Preload("Allocations").Where("external_name = ?", name).Find(&charges).Error; err != nil {
+	if err := r.db.Preload("Allocations").Preload("Game").Where("external_name = ?", name).Find(&charges).Error; err != nil {
 		return nil, err
 	}
 
@@ -155,13 +153,43 @@ func (r *PaymentsRepository) ListChargesByExternalName(name string) ([]models.Ga
 	return domain, nil
 }
 
+func (r *PaymentsRepository) ListUnpaidChargesByExternalName(name string) ([]models.GameCharge, error) {
+	var charges []persistence.GameCharge
+	if err := r.db.Preload("Allocations").Preload("Game").Where("external_name = ?", name).Order("created_at asc").Find(&charges).Error; err != nil {
+		return nil, err
+	}
+
+	var domain []models.GameCharge
+	for _, c := range charges {
+		dc := persistenceToDomainCharge(c)
+		if !dc.IsPaid() {
+			domain = append(domain, dc)
+		}
+	}
+	return domain, nil
+}
+
 func persistenceToDomainCharge(c persistence.GameCharge) models.GameCharge {
 	allocations := make([]models.PaymentAllocation, len(c.Allocations))
 	for i, a := range c.Allocations {
 		allocations[i] = models.PaymentAllocation{
 			PaymentID:     a.PaymentID,
 			GameChargeID:  a.GameChargeID,
-			AmountInCents: a.AmountInCents,
+			AmountInCents: a.AmountCents,
+		}
+	}
+
+	var domainGame *models.Game
+	if c.Game.ID != "" {
+		// We use a simplified mapping here or call mappers.GameToDomain
+		// For now let's just populate basic info to avoid circular dependency if mappers import repositories
+		domainGame = &models.Game{
+			ID:          c.Game.ID,
+			LeagueID:    c.Game.LeagueID,
+			StartTime:   c.Game.StartTime,
+			Location:    c.Game.Location,
+			CostInCents: c.Game.CostInCents,
+			IsCanceled:  c.Game.IsCanceled,
 		}
 	}
 
@@ -173,6 +201,7 @@ func persistenceToDomainCharge(c persistence.GameCharge) models.GameCharge {
 		AmountCents:  c.AmountCents,
 		CreatedAt:    c.CreatedAt,
 		Allocations:  allocations,
+		Game:         domainGame,
 	}
 }
 

@@ -9,4 +9,5 @@ type GameCharge struct {
 	AmountCents  int     `gorm:"not null;check:amount_cents > 0" json:"amountCents"`
 
 	Allocations []PaymentAllocation `gorm:"foreignKey:GameChargeID" json:"allocations"`
+	Game        Game                `gorm:"foreignKey:GameID;constraint:OnDelete:CASCADE" json:"game"`
 }

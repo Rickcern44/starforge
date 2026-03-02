@@ -1,4 +1,5 @@
 import type { PageServerLoad } from './$types';
+import { getLeagues } from '$lib/services/league';
 import { getUserPayments, getUserCharges } from '$lib/services/payment';
 import { redirect } from '@sveltejs/kit';
 
@@ -9,12 +10,14 @@ export const load: PageServerLoad = async ({ fetch, locals }) => {
     throw redirect(303, '/auth/login');
   }
 
-  const [payments, charges] = await Promise.all([
+  const [leagues, payments, charges] = await Promise.all([
+    getLeagues(fetch, token),
     getUserPayments(fetch, token),
     getUserCharges(fetch, token)
   ]);
 
   return {
+    leagues,
     payments,
     charges
   };

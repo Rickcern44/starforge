@@ -1,5 +1,6 @@
 <script lang="ts">
   import Header from '$lib/components/Header.svelte';
+  import Toaster from '$lib/components/Toaster.svelte';
   import './layout.css';
   import { authService } from '$lib/services/auth.svelte';
   import { browser } from '$app/environment';
@@ -17,6 +18,7 @@
 </script>
 
 <div class="min-h-screen bg-gray-100">
+  <Toaster />
   <Header />
   <main class="container mx-auto p-4">
     {@render children()}

@@ -39,5 +39,7 @@ func (r *GameAttendanceRepository) FindByGameAndUser(gameID, userID string) (*mo
 
 func (r *GameAttendanceRepository) Update(attendance *models.GameAttendance, gameID string) error {
 	attendanceDto := mappers.GameAttendanceToDto(attendance, gameID)
-	return r.db.Save(attendanceDto).Error
+	return r.db.Model(&persistence.GameAttendance{}).
+		Where("game_id = ? AND user_id = ?", gameID, attendance.UserID).
+		Updates(attendanceDto).Error
 }

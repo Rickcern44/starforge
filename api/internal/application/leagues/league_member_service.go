@@ -1,9 +1,8 @@
 package leagues
 
 import (
-	"github.com/bouncy/bouncy-api/internal/application/interfaces"
+	"github.com/bouncy/bouncy-api/internal/domain/interfaces"
 	"github.com/bouncy/bouncy-api/internal/domain/models"
-	"github.com/bouncy/bouncy-api/internal/infrastructure/persistence/mappers"
 )
 
 type LeagueMemberService struct {
@@ -21,11 +20,8 @@ func (s *LeagueMemberService) ListMembers(leagueId string) ([]models.LeagueMembe
 func (s *LeagueMemberService) AddMember(leagueID, addingUserId, userId string, role models.Role) error {
 	//TODO: Add an admin check before allowing the user to add the member to the league
 	leagueMember := models.CreateLeagueMember(leagueID, userId, role)
-	memberDto := mappers.LeagueMemberToDto(leagueMember)
 
-	memberDto.LeagueID = leagueID
-
-	return s.repo.Add(memberDto)
+	return s.repo.Add(leagueMember)
 }
 
 func (s *LeagueMemberService) UpdateRole(leagueId, userId string, role models.Role) error {

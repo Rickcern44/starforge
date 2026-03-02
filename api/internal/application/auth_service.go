@@ -7,8 +7,8 @@ import (
 	"net/mail"
 	"time"
 
-	"github.com/bouncy/bouncy-api/internal/application/interfaces"
 	"github.com/bouncy/bouncy-api/internal/application/payments"
+	"github.com/bouncy/bouncy-api/internal/domain/interfaces"
 	"github.com/bouncy/bouncy-api/internal/domain/models"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/auth"
 	"github.com/google/uuid"

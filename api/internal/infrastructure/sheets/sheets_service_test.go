@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bouncy/bouncy-api/internal/application/interfaces"
+	"github.com/bouncy/bouncy-api/internal/domain/interfaces"
 	"github.com/bouncy/bouncy-api/internal/application/payments"
 	"github.com/bouncy/bouncy-api/internal/application/users"
 	"github.com/bouncy/bouncy-api/internal/domain/models"

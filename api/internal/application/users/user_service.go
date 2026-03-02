@@ -1,7 +1,7 @@
 package users
 
 import (
-	"github.com/bouncy/bouncy-api/internal/application/interfaces"
+	"github.com/bouncy/bouncy-api/internal/domain/interfaces"
 	"github.com/bouncy/bouncy-api/internal/domain/models"
 )
 

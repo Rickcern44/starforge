@@ -14,6 +14,7 @@ type GameCharge struct {
 	AmountCents  int                 `json:"amountCents"`
 	CreatedAt    time.Time           `json:"createdAt"`
 	Allocations  []PaymentAllocation `json:"allocations"`
+	Game         *Game               `json:"game,omitempty"`
 }
 
 func (c GameCharge) IsPaid() bool {

@@ -4,6 +4,7 @@
   import { addPayment, addAllocation } from '$lib/services/payment';
   import type { League, Payment, Game, GameCharge, Invitation } from '$lib/models';
   import { authService } from '$lib/services/auth.svelte';
+  import { toastService } from '$lib/services/toast.svelte';
 
   let { data } = $props();
 
@@ -57,10 +58,10 @@
     isInviting = true;
     const success = await inviteUser(inviteEmail, league.id);
     if (success) {
-      alert(`Invitation sent to ${inviteEmail}`);
+      toastService.success(`Invitation sent to ${inviteEmail}`);
       inviteEmail = '';
     } else {
-      alert('Failed to send invitation.');
+      toastService.error('Failed to send invitation.');
     }
     isInviting = false;
   }
@@ -84,7 +85,7 @@
 
     isAddingPayment = true;
     const paymentData = {
-      amountInCents: Math.round(newPaymentAmount * 100),
+      amountCents: Math.round(newPaymentAmount * 100),
       method: newPaymentMethod,
       externalName: payerName,
       userId: userId,
@@ -93,11 +94,11 @@
     };
     const success = await addPayment(league.id, paymentData);
     if (success) {
-      alert('Payment added successfully.');
+      toastService.success('Payment added successfully.');
       // Refresh payments (in a real app we'd fetch or update state)
       location.reload(); 
     } else {
-      alert('Failed to add payment.');
+      toastService.error('Failed to add payment.');
     }
     isAddingPayment = false;
   }
@@ -112,10 +113,10 @@
     });
 
     if (success) {
-      alert('Allocation successful.');
+      toastService.success('Allocation successful.');
       location.reload();
     } else {
-      alert('Failed to allocate payment.');
+      toastService.error('Failed to allocate payment.');
     }
     isAllocating = false;
   }

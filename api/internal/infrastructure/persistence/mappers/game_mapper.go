@@ -26,7 +26,7 @@ func GameToDomain(m persistence.Game) *models.Game {
 			allocations[j] = models.PaymentAllocation{
 				PaymentID:     a.PaymentID,
 				GameChargeID:  a.GameChargeID,
-				AmountInCents: a.AmountInCents,
+				AmountInCents: a.AmountCents,
 			}
 		}
 

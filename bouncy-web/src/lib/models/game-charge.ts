@@ -1,3 +1,4 @@
+import type { Game } from './game';
 import type { PaymentAllocation } from './payment-allocation';
 
 export interface GameCharge {
@@ -7,4 +8,5 @@ export interface GameCharge {
   amountCents: number;
   createdAt: Date;
   allocations: PaymentAllocation[];
+  game?: Game;
 }
