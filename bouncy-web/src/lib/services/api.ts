@@ -1,6 +1,7 @@
 import { browser } from '$app/environment';
+import { PUBLIC_API_URL } from '$env/static/public';
 
-const BASE_URL = 'http://localhost:3000/api/v1';
+const BASE_URL = PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 let authToken: string | null = null;
 

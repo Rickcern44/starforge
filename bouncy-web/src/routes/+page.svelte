@@ -97,66 +97,102 @@
   <title>Home | League Manager</title>
 </svelte:head>
 
-<div class="max-w-3xl mx-auto space-y-8 py-4">
-    <header class="flex justify-between items-end">
+<div class="max-w-xl mx-auto space-y-8 py-2">
+    <header class="flex justify-between items-end px-1">
       <div>
-        <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Welcome back,</p>
-        <h2 class="text-3xl font-bold text-gray-900">{user ? user.name : 'Guest'}</h2>
+        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Welcome back,</p>
+        <h2 class="text-3xl font-black text-gray-900 tracking-tight">{user ? user.name : 'Guest'}</h2>
       </div>
-      <button class="p-2 text-gray-400 hover:text-indigo-600 transition-colors">
+      <button class="w-10 h-10 bg-white border border-gray-100 rounded-xl shadow-sm flex items-center justify-center text-gray-400 active:text-indigo-600 active:bg-indigo-50 transition-all">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
         </svg>
       </button>
     </header>
 
-    <!-- Managed Leagues Section (Intuitive Admin Entry) -->
-    {#if managedLeagues.length > 0}
-      <section class="space-y-4">
-        <div class="flex justify-between items-center">
-          <h3 class="text-xl font-black text-gray-900">Manage Your Leagues</h3>
+    <!-- Financial Summary (Premium Card) -->
+    <button 
+      class="w-full text-left bg-indigo-600 text-white p-6 rounded-[28px] shadow-2xl shadow-indigo-200 cursor-pointer hover:bg-indigo-700 active:scale-[0.97] transition-all duration-300 relative overflow-hidden group" 
+      onclick={() => goto('/ledger')}
+    >
+      <!-- Background Ornament -->
+      <div class="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+      
+      <div class="relative z-10 flex justify-between items-start mb-6">
+        <div>
+          <p class="text-xs font-bold text-indigo-100 uppercase tracking-widest mb-1 opacity-80">Outstanding Balance</p>
+          <p class="text-5xl font-black tracking-tighter">${financialSummary.balance.toFixed(2)}</p>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        </div>
+      </div>
+      
+      <div class="relative z-10 flex items-center justify-between text-indigo-100">
+        <div class="flex items-center space-x-2 bg-black/10 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider border border-white/10">
+          <span class="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></span>
+          <span>{financialSummary.count} {financialSummary.count === 1 ? 'Charge' : 'Charges'} pending</span>
+        </div>
+        <div class="flex items-center text-xs font-bold uppercase tracking-widest opacity-70 group-hover:opacity-100 transition-opacity">
+          Details
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </button>
+
+    <!-- Managed Leagues Section -->
+    {#if managedLeagues.length > 0}
+      <section class="space-y-4 px-1">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-black text-gray-900 tracking-tight">Admin Dashboard</h3>
+        </div>
+        <div class="grid grid-cols-1 gap-3">
           {#each managedLeagues as league}
             <button
-              class="flex items-center justify-between p-4 bg-indigo-50 border border-indigo-100 rounded-2xl hover:bg-indigo-100 transition-all group"
+              class="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-[22px] hover:border-indigo-100 shadow-sm active:scale-[0.98] active:bg-gray-50 transition-all group"
               onclick={() => goto(`/leagues/${league.id}/admin`)}
             >
-              <div class="flex items-center space-x-3">
-                <div class="bg-indigo-600 p-2 rounded-xl text-white">
+              <div class="flex items-center space-x-4">
+                <div class="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
                   </svg>
                 </div>
                 <div class="text-left">
-                  <p class="font-black text-indigo-900 text-sm">{league.name}</p>
-                  <p class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Admin Dashboard</p>
+                  <p class="font-bold text-gray-900 leading-tight">{league.name}</p>
+                  <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-0.5">Settings & Finances</p>
                 </div>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
+              <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
             </button>
           {/each}
         </div>
       </section>
     {/if}
 
-    <!-- League Selector (Horizontal Chips) -->
-    <section class="space-y-3">
-      <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Select League</h3>
-      <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide no-scrollbar">
+    <!-- League Selector -->
+    <section class="space-y-4 px-1">
+      <div class="flex space-x-2 overflow-x-auto pb-2 no-scrollbar">
         {#each ['All Leagues', ...allLeagues.map(l => l.name)] as name}
           <button
-            class="px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 border"
+            class="px-6 py-2.5 rounded-2xl text-[13px] font-black whitespace-nowrap transition-all duration-300 border uppercase tracking-wide"
             class:bg-indigo-600={selectedLeagueName === name}
             class:text-white={selectedLeagueName === name}
             class:border-indigo-600={selectedLeagueName === name}
+            class:shadow-lg={selectedLeagueName === name}
+            class:shadow-indigo-100={selectedLeagueName === name}
             class:bg-white={selectedLeagueName !== name}
-            class:text-gray-600={selectedLeagueName !== name}
-            class:border-gray-200={selectedLeagueName !== name}
-            class:hover:border-indigo-300={selectedLeagueName !== name}
+            class:text-gray-400={selectedLeagueName !== name}
+            class:border-gray-100={selectedLeagueName !== name}
+            class:active:bg-gray-50={selectedLeagueName !== name}
             onclick={() => (selectedLeagueName = name)}
           >
             {name}
@@ -165,49 +201,17 @@
       </div>
     </section>
 
-    <!-- Financial Summary (Minimalist) -->
-    <button 
-      class="w-full text-left bg-indigo-600 text-white p-8 rounded-[20px] shadow-lg shadow-indigo-200 cursor-pointer hover:bg-indigo-700 transition-all duration-300 transform hover:-translate-y-1" 
-      onclick={() => goto('/ledger')}
-    >
-      <div class="flex justify-between items-start mb-8">
-        <div>
-          <p class="text-sm font-medium text-indigo-100 opacity-80 mb-1">Outstanding Balance</p>
-          <p class="text-4xl font-bold tracking-tight">${financialSummary.balance.toFixed(2)}</p>
-        </div>
-        <div class="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-        </div>
-      </div>
-      
-      <div class="flex items-center justify-between text-indigo-100">
-        <div class="flex items-center space-x-3 text-sm font-medium">
-          <div class="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Unpaid Charges: {financialSummary.count} {financialSummary.count === 1 ? 'Item' : 'Items'}
-          </div>
-        </div>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-      </div>
-    </button>
-
     <!-- Upcoming Events -->
-    <section class="space-y-4">
+    <section class="space-y-5 px-1 pb-20">
       <div class="flex justify-between items-center">
-        <h3 class="text-xl font-bold text-gray-900">Upcoming Events</h3>
-        <button class="text-indigo-600 hover:text-indigo-800 text-sm font-bold transition-colors" onclick={() => goto('/events')}>See all</button>
+        <h3 class="text-xl font-black text-gray-900 tracking-tight">Schedule</h3>
+        <button class="text-[11px] font-black text-indigo-600 uppercase tracking-widest border-b-2 border-indigo-100 pb-0.5" onclick={() => goto('/events')}>View All</button>
       </div>
       
-      <div class="space-y-3">
+      <div class="space-y-4">
         {#if upcomingGames.length === 0}
-          <div class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl py-12 text-center">
-            <p class="text-gray-400 font-medium italic">No upcoming events scheduled</p>
+          <div class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-[28px] py-16 text-center">
+            <p class="text-gray-400 font-bold italic text-sm">No games on the horizon</p>
           </div>
         {:else}
           {#each upcomingGames as game (game.id)}
@@ -215,40 +219,33 @@
             {@const member = league?.members.find(m => m.playerId === user?.id)}
             {@const isAdmin = member && (member.role.toLowerCase().includes('admin') || member.role.toLowerCase().includes('owner'))}
             
-            <div class="relative group">
-              <button
-                class="w-full text-left bg-white p-4 rounded-2xl shadow-sm border border-gray-100 cursor-pointer flex items-center space-x-4 hover:shadow-md hover:border-indigo-100 transition-all duration-200"
-                onclick={() => goto(`/events/${game.id}`)}
-              >
-                <div class="bg-indigo-50 p-3 rounded-xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17l-3 3m0 0l-3-3m3 3V10" />
+            <button
+              class="w-full text-left bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm active:scale-[0.98] active:bg-gray-50 transition-all duration-300 flex items-center group relative overflow-hidden"
+              onclick={() => goto(`/events/${game.id}`)}
+            >
+              <div class="bg-gray-50 p-3 rounded-2xl text-gray-400 group-active:bg-indigo-600 group-active:text-white transition-colors duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div class="ml-4 flex-grow">
+                <div class="flex items-center space-x-2">
+                  <span class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{league?.name || 'League'}</span>
+                  <span class="w-1 h-1 rounded-full bg-gray-300"></span>
+                  <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{new Date(game.startTime).toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                </div>
+                <p class="font-black text-gray-900 text-lg leading-tight mt-0.5 group-hover:text-indigo-600 transition-colors">{game.location}</p>
+              </div>
+              <div class="text-right flex flex-col items-end">
+                <p class="font-black text-gray-900 text-sm">{new Date(game.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/New_York' })}</p>
+                <div class="mt-1 flex items-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  Details
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
-                <div class="flex-grow">
-                  <p class="font-bold text-gray-900 leading-tight">Game at {game.location}</p>
-                  <p class="text-sm text-gray-500 font-medium mt-0.5">
-                    {league ? league.name : 'Unknown League'} • {new Date(game.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' })}
-                  </p>
-                </div>
-                <div class="text-right">
-                  <p class="font-black text-indigo-600">{new Date(game.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/New_York' })}</p>
-                </div>
-              </button>
-              
-              {#if isAdmin}
-                <button 
-                  class="absolute -top-2 -right-2 bg-indigo-100 text-indigo-600 p-1.5 rounded-lg border border-white shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-indigo-600 hover:text-white"
-                  onclick={(e) => { e.stopPropagation(); goto(`/leagues/${game.leagueId}/admin`); }}
-                  title="Manage League"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
-              {/if}
-            </div>
+              </div>
+            </button>
           {/each}
         {/if}
       </div>
@@ -257,13 +254,13 @@
     <!-- Floating Action Button -->
     {#if canCreateEvent}
       <button
-        class="fixed bottom-8 right-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-2xl shadow-xl shadow-indigo-200 flex items-center space-x-2 transition-all duration-200 transform hover:scale-105 active:scale-95"
+        class="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-2xl shadow-indigo-300 flex items-center justify-center active:scale-90 active:rotate-12 transition-all duration-300 z-50 border-2 border-white/20 backdrop-blur-sm"
         onclick={() => goto('/events/create')}
+        title="New Event"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
-        <span class="text-sm">New Event</span>
       </button>
     {/if}
   </div>

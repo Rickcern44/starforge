@@ -1,10 +1,11 @@
-import type { PageServerLoad } from './$types';
+import type { PageLoad } from './$types';
 import { getLeagueById, getLeagueInvitations } from '$lib/services/league';
 import { getPaymentsForLeague, getFinancialSummaryForLeague } from '$lib/services/payment';
 import { error, redirect } from '@sveltejs/kit';
+import { authService } from '$lib/services/auth.svelte';
 
-export const load: PageServerLoad = async ({ params, fetch, locals }) => {
-  const token = locals.token;
+export const load: PageLoad = async ({ params, fetch }) => {
+  const token = authService.token;
   const leagueId = params.id;
 
   if (!token) {
@@ -23,7 +24,7 @@ export const load: PageServerLoad = async ({ params, fetch, locals }) => {
   }
 
   // Check if user is admin of this league
-  const member = league.members.find(m => m.playerId === locals.user?.id);
+  const member = league.members.find(m => m.playerId === authService.user?.id);
   const isAdmin = member && (member.role.toLowerCase().includes('admin') || member.role.toLowerCase().includes('owner'));
 
   if (!isAdmin) {
