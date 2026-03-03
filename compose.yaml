@@ -1,20 +1,62 @@
 services:
-  db-server:
-    container_name: db-server
-    image: postgres:latest
+  db:
+    container_name: bouncy-db
+    image: postgres:17-alpine
     environment:
       - POSTGRES_DB=bouncy
-      - POSTGRES_USER=dbuser
-      - POSTGRES_PASSWORD=Password123
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
     ports:
       - "5432:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/docker
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bouncy"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
-      - local_network
+      - bouncy-network
+
+  api:
+    container_name: bouncy-api
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    environment:
+      - APP_ENV=local
+      - PORT=3000
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - POSTGRES_PASS=password
+      - DB_NAME=bouncy
+      - JWT_SECRET=change-me-in-production
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bouncy-network
+
+  web:
+    container_name: bouncy-web
+    build:
+      context: ./bouncy-web
+      dockerfile: Dockerfile
+      args:
+        - PUBLIC_API_URL=http://localhost:3000/api/v1
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - bouncy-network
+
 volumes:
   pg_data:
 
 networks:
-  local_network:
+  bouncy-network:
     driver: bridge
