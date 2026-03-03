@@ -31,6 +31,7 @@ func RegisterUserPaymentsRoutes(r chi.Router, handler *PaymentsHandler) {
 // RegisterPaymentsRoutes registers the payment related routes for league administration.
 func RegisterPaymentsRoutes(r chi.Router, handler *PaymentsHandler) {
 	r.Get("/league/{leagueId}/payments", handler.ListPayments)
+	r.Get("/league/{leagueId}/financials", handler.GetFinancialSummary)
 	r.Post("/league/{leagueId}/payments", handler.AddPayment)
 	r.Post("/payments/{paymentId}/allocations", handler.AddAllocation)
 
@@ -89,6 +90,20 @@ func (h *PaymentsHandler) ListPayments(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSON(w, http.StatusOK, payments)
+}
+
+// GetFinancialSummary handles getting the financial summary for a league.
+func (h *PaymentsHandler) GetFinancialSummary(w http.ResponseWriter, r *http.Request) {
+	leagueId := chi.URLParam(r, "leagueId")
+
+	summary, err := h.service.GetFinancialSummary(leagueId)
+	if err != nil {
+		slog.Error("Get league financial summary failed", "leagueId", leagueId, "error", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, summary)
 }
 
 // AddPayment handles adding a new payment to a league.

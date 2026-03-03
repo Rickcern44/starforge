@@ -1,5 +1,5 @@
 import * as api from './api';
-import type { Payment, PaymentAllocation, GameCharge } from '$lib/models';
+import type { Payment, PaymentAllocation, GameCharge, LeagueFinancialSummary } from '$lib/models';
 
 export async function getPaymentsForLeague(leagueId: string, fetch?: api.Fetch, token?: string): Promise<Payment[]> {
   try {
@@ -8,6 +8,16 @@ export async function getPaymentsForLeague(leagueId: string, fetch?: api.Fetch, 
   } catch (error) {
     console.error(`Error fetching payments for league ${leagueId}:`, error);
     return [];
+  }
+}
+
+export async function getFinancialSummaryForLeague(leagueId: string, fetch?: api.Fetch, token?: string): Promise<LeagueFinancialSummary | null> {
+  try {
+    const summary = await api.get(`league/${leagueId}/financials`, fetch, token);
+    return summary as LeagueFinancialSummary;
+  } catch (error) {
+    console.error(`Error fetching financial summary for league ${leagueId}:`, error);
+    return null;
   }
 }
 

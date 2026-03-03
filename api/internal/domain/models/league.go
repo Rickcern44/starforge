@@ -46,3 +46,12 @@ func (l *League) AddGame(gameId string) error {
 
 	return nil
 }
+
+type LeagueFinancialSummary struct {
+	LeagueID       string `json:"leagueId"`
+	TotalCollected int    `json:"totalCollected"` // Sum of all payments
+	TotalCharges   int    `json:"totalCharges"`   // Sum of all game charges
+	TotalAllocated int    `json:"totalAllocated"` // Sum of all allocations (paid towards charges)
+	TotalUnpaid    int    `json:"totalUnpaid"`    // TotalCharges - TotalAllocated
+	TotalAvailable int    `json:"totalAvailable"` // TotalCollected - TotalAllocated
+}

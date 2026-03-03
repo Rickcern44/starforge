@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { getLeagueById, getLeagueInvitations } from '$lib/services/league';
-import { getPaymentsForLeague } from '$lib/services/payment';
+import { getPaymentsForLeague, getFinancialSummaryForLeague } from '$lib/services/payment';
 import { error, redirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ params, fetch, locals }) => {
@@ -11,10 +11,11 @@ export const load: PageServerLoad = async ({ params, fetch, locals }) => {
     throw redirect(303, '/auth/login');
   }
 
-  const [league, payments, invitations] = await Promise.all([
+  const [league, payments, invitations, financialSummary] = await Promise.all([
     getLeagueById(leagueId, fetch, token),
     getPaymentsForLeague(leagueId, fetch, token),
-    getLeagueInvitations(leagueId, fetch, token)
+    getLeagueInvitations(leagueId, fetch, token),
+    getFinancialSummaryForLeague(leagueId, fetch, token)
   ]);
 
   if (!league) {
@@ -32,6 +33,7 @@ export const load: PageServerLoad = async ({ params, fetch, locals }) => {
   return {
     league,
     payments,
-    invitations
+    invitations,
+    financialSummary
   };
 };

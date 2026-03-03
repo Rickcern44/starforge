@@ -32,6 +32,7 @@ type PaymentsRepository interface {
 	ListChargesByExternalName(name string) ([]models.GameCharge, error)
 	ListUnpaidChargesByExternalName(name string) ([]models.GameCharge, error)
 	ClaimUnclaimedRecords(userID string, externalName string) error
+	GetFinancialSummary(leagueID string) (*models.LeagueFinancialSummary, error)
 }
 
 type GameAttendanceRepository interface {

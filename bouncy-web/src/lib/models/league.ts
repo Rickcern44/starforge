@@ -8,3 +8,12 @@ export interface League {
   members: LeagueMember[];
   games: Game[];
 }
+
+export interface LeagueFinancialSummary {
+  leagueId: string;
+  totalCollected: number;
+  totalCharges: number;
+  totalAllocated: number;
+  totalUnpaid: number;
+  totalAvailable: number;
+}

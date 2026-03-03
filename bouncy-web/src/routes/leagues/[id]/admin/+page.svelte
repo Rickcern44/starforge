@@ -11,6 +11,7 @@
   let league = $state<League>(data.league);
   let payments = $state<Payment[]>(data.payments || []);
   let invitations = $state<Invitation[]>(data.invitations || []);
+  let financialSummary = $derived(data.financialSummary);
   let activeTab = $state<'overview' | 'members' | 'payments'>('overview');
 
   // Member management
@@ -178,19 +179,61 @@
   </div>
 
   {#if activeTab === 'overview'}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-2">
-        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Members</p>
-        <p class="text-3xl font-black text-gray-900">{league.members.length}</p>
+    <div class="space-y-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-2">
+          <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Members</p>
+          <p class="text-3xl font-black text-gray-900">{league.members.length}</p>
+        </div>
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-2">
+          <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Collected</p>
+          <p class="text-3xl font-black text-green-600">${((financialSummary?.totalCollected || 0) / 100).toFixed(2)}</p>
+        </div>
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-2">
+          <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Charges</p>
+          <p class="text-3xl font-black text-red-600">${((financialSummary?.totalCharges || 0) / 100).toFixed(2)}</p>
+        </div>
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-2">
+          <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Available Balance</p>
+          <p class="text-3xl font-black text-indigo-600">${((financialSummary?.totalAvailable || 0) / 100).toFixed(2)}</p>
+        </div>
       </div>
-      <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-2">
-        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Games</p>
-        <p class="text-3xl font-black text-gray-900">{league.games.filter(g => !g.isCanceled).length}</p>
-      </div>
-      <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-2">
-        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Unallocated Funds</p>
-        <p class="text-3xl font-black text-green-600">${unallocatedPayments.reduce((sum, p) => sum + getUnallocatedAmount(p), 0).toFixed(2)}</p>
-      </div>
+
+      <section class="space-y-3">
+        <h3 class="text-xl font-black text-gray-900 px-1">Treasurer Overview</h3>
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-4">
+              <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+                <span class="text-sm font-bold text-gray-500">Total Funds Collected</span>
+                <span class="text-sm font-black text-gray-900">${((financialSummary?.totalCollected || 0) / 100).toFixed(2)}</span>
+              </div>
+              <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+                <span class="text-sm font-bold text-gray-500">Allocated to Games</span>
+                <span class="text-sm font-black text-green-600">-${((financialSummary?.totalAllocated || 0) / 100).toFixed(2)}</span>
+              </div>
+              <div class="flex justify-between items-center pt-2">
+                <span class="text-sm font-black text-gray-900">Unallocated Funds (Credit)</span>
+                <span class="text-sm font-black text-indigo-600">${((financialSummary?.totalAvailable || 0) / 100).toFixed(2)}</span>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+                <span class="text-sm font-bold text-gray-500">Total Game Revenue Due</span>
+                <span class="text-sm font-black text-gray-900">${((financialSummary?.totalCharges || 0) / 100).toFixed(2)}</span>
+              </div>
+              <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+                <span class="text-sm font-bold text-gray-500">Payments Applied</span>
+                <span class="text-sm font-black text-green-600">-${((financialSummary?.totalAllocated || 0) / 100).toFixed(2)}</span>
+              </div>
+              <div class="flex justify-between items-center pt-2">
+                <span class="text-sm font-black text-gray-900">Total Outstanding Debt</span>
+                <span class="text-sm font-black text-red-600">${((financialSummary?.totalUnpaid || 0) / 100).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   {/if}
 

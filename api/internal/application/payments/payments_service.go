@@ -126,3 +126,7 @@ func (s *Service) ListChargesByExternalName(name string) ([]models.GameCharge, e
 func (s *Service) ClaimUnclaimedRecords(userID string, externalName string) error {
 	return s.repo.ClaimUnclaimedRecords(userID, externalName)
 }
+
+func (s *Service) GetFinancialSummary(leagueID string) (*models.LeagueFinancialSummary, error) {
+	return s.repo.GetFinancialSummary(leagueID)
+}

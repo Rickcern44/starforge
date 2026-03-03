@@ -224,3 +224,43 @@ func (r *PaymentsRepository) ClaimUnclaimedRecords(userID string, externalName s
 		return nil
 	})
 }
+
+func (r *PaymentsRepository) GetFinancialSummary(leagueID string) (*models.LeagueFinancialSummary, error) {
+	var totalCollected int
+	err := r.db.Model(&persistence.Payment{}).
+		Where("league_id = ?", leagueID).
+		Select("COALESCE(SUM(amount_cents), 0)").
+		Scan(&totalCollected).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var totalCharges int
+	err = r.db.Model(&persistence.GameCharge{}).
+		Joins("JOIN games ON game_charges.game_id = games.id").
+		Where("games.league_id = ?", leagueID).
+		Select("COALESCE(SUM(game_charges.amount_cents), 0)").
+		Scan(&totalCharges).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var totalAllocated int
+	err = r.db.Model(&persistence.PaymentAllocation{}).
+		Joins("JOIN payments ON payment_allocations.payment_id = payments.id").
+		Where("payments.league_id = ?", leagueID).
+		Select("COALESCE(SUM(payment_allocations.amount_cents), 0)").
+		Scan(&totalAllocated).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.LeagueFinancialSummary{
+		LeagueID:       leagueID,
+		TotalCollected: totalCollected,
+		TotalCharges:   totalCharges,
+		TotalAllocated: totalAllocated,
+		TotalUnpaid:    totalCharges - totalAllocated,
+		TotalAvailable: totalCollected - totalAllocated,
+	}, nil
+}
