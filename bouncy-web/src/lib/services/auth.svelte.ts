@@ -5,10 +5,11 @@ import type { User } from '$lib/models';
 class AuthService {
   user = $state<User | null>(null);
   token = $state<string | null>(null);
+  initialized: Promise<void> = browser ? Promise.resolve() : new Promise(() => {});
 
   constructor() {
     if (browser) {
-      const storedToken = localStorage.getItem('access_token') || this.getCookie('access_token');
+      const storedToken = localStorage.getItem('access_token');
       const storedUser = localStorage.getItem('current_user');
 
       if (storedToken) {
@@ -23,9 +24,11 @@ class AuthService {
         }
       }
 
-      // If we have a token but no user, fetch profile automatically
-      if (this.token && !this.user) {
-        this.fetchAndSaveUserProfile();
+      // If we have a token, always fetch profile to ensure it is still valid
+      if (this.token) {
+        this.initialized = this.fetchAndSaveUserProfile().then(() => {});
+      } else {
+        this.initialized = Promise.resolve();
       }
 
       $effect.root(() => {
@@ -33,10 +36,8 @@ class AuthService {
           api.setToken(this.token);
           if (this.token) {
             localStorage.setItem('access_token', this.token);
-            this.setCookie('access_token', this.token, 7);
           } else {
             localStorage.removeItem('access_token');
-            this.deleteCookie('access_token');
           }
         });
 
@@ -51,38 +52,12 @@ class AuthService {
     }
   }
 
-  private setCookie(name: string, value: string, days: number) {
-    if (!browser) return;
-    const date = new Date();
-    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-    const expires = "; expires=" + date.toUTCString();
-    document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
-  }
-
-  private getCookie(name: string): string | null {
-    if (!browser) return null;
-    const nameEQ = name + "=";
-    const ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-      let c = ca[i];
-      while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-      if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
-  }
-
-  private deleteCookie(name: string) {
-    if (!browser) return;
-    document.cookie = name + '=; Max-Age=-99999999; path=/;';
-  }
-
   async login(email: string, password: string): Promise<boolean> {
     try {
       const response = await api.post('auth/login', { email, password });
       if (response && response.token) {
         this.token = response.token;
         api.setToken(response.token);
-        this.setCookie('access_token', response.token, 7);
         await this.fetchAndSaveUserProfile();
         return true;
       }
@@ -99,7 +74,6 @@ class AuthService {
       if (response && response.token) {
         this.token = response.token;
         api.setToken(response.token);
-        this.setCookie('access_token', response.token, 7);
         await this.fetchAndSaveUserProfile();
         return true;
       }
@@ -129,7 +103,6 @@ class AuthService {
     if (browser) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('current_user');
-      this.deleteCookie('access_token');
     }
   }
 }
