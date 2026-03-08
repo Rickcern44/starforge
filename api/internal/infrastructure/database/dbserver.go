@@ -1,7 +1,6 @@
 package database
 
 import (
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -12,26 +11,18 @@ import (
 )
 
 type Service struct {
-	host     string
-	port     string
-	user     string
-	pass     string
-	dbName   string
-	Database *gorm.DB
+	connectionString string
+	Database         *gorm.DB
 }
 
 func NewDatabaseService(settings *config.Config) *Service {
 	return &Service{
-		host:   settings.Database.Host,
-		port:   settings.Database.Port,
-		user:   settings.Database.Username,
-		pass:   settings.Database.Password,
-		dbName: settings.Database.Database,
+		connectionString: settings.Database.ConnectionString,
 	}
 }
 
 func (dbs *Service) Connect() error {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", dbs.host, dbs.user, dbs.pass, dbs.dbName, dbs.port)
+	dsn := dbs.connectionString
 
 	var db *gorm.DB
 	var err error
@@ -57,12 +48,12 @@ func (dbs *Service) Connect() error {
 	}
 
 	dbs.Database = db
-	slog.With("database", dbs.dbName).Info("Connected to database")
+	slog.Info("Connected to database")
 	return nil
 }
 
 func (dbs *Service) UpdateDatabase() error {
-	fmt.Println("Updating database...")
+	slog.Info("Updating database...")
 	err := dbs.Database.AutoMigrate(
 		&persistence.User{},
 		&persistence.League{},

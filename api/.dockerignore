@@ -1,0 +1,31 @@
+# Ignore generated documentation
+**/.docs/swagger.*
+
+# remove private environment files (specifically http file env files)
+**/*.private.env.json
+.config/
+
+# Ignore Kubernetes infrastructure files
+.infra/
+
+bin/
+# Added by goreleaser init:
+dist/
+
+# Default ignored files
+.idea/
+.idea/shelf/
+.idea/workspace.xml
+# Ignored default folder with query files
+.idea/queries/
+# Datasource local storage ignored files
+.idea/dataSources/
+.idea/dataSources.local.xml
+# Editor-based HTTP Client requests
+.idea/httpRequests/
+fly.toml
+api
+bouncy
+*.exe
+*.zip
+*.tar.gz
