@@ -78,4 +78,27 @@ func TestLoadConfig_Scenarios(t *testing.T) {
 		}
 		os.Unsetenv("APP_ENV")
 	})
+
+	t.Run("NestedMapping", func(t *testing.T) {
+		clearEnv()
+		os.Setenv("PORT", "9000")
+		os.Setenv("DATABASE_URL", "postgres://test:test@localhost/test")
+		os.Setenv("JWT_SECRET", "test-secret")
+		defer clearEnv()
+
+		config, err := LoadConfig()
+		if err != nil {
+			t.Fatalf("Failed to load config: %v", err)
+		}
+
+		if config.Server.Port != 9000 {
+			t.Errorf("Expected Server.Port 9000, got %d", config.Server.Port)
+		}
+		if config.Database.ConnectionString != "postgres://test:test@localhost/test" {
+			t.Errorf("Expected Database.ConnectionString to be set, got '%s'", config.Database.ConnectionString)
+		}
+		if config.Auth.JwtSecret != "test-secret" {
+			t.Errorf("Expected Auth.JwtSecret 'test-secret', got '%s'", config.Auth.JwtSecret)
+		}
+	})
 }

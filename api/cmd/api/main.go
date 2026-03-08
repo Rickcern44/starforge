@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -30,46 +30,54 @@ import (
 func main() {
 	settings, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Failed to load config", "error", err)
+		os.Exit(1)
 	}
+
+	slog.Info("Starting app", "env", settings.AppEnv, "isDev", settings.IsDevelopment)
 
 	chiServer := server.NewServer()
 	dbServer := database.NewDatabaseService(settings)
+	
+	slog.Info("Connecting to database...")
 	if err := dbServer.Connect(); err != nil {
-		log.Fatal(err)
+		slog.Error("Database connection failed", "error", err)
+		os.Exit(1)
 	}
 
 	if settings.IsDevelopment {
+		slog.Info("Development mode: running migrations and seeders")
 		_ = dbServer.UpdateDatabase()
 		_ = dbServer.Seed()
 	}
 
-
 	app := container.NewAppContainer(dbServer.Database, settings)
 	routes.RegisterRoutes(chiServer.Router(), app.ToDependencies())
 
-	addr := fmt.Sprintf(":%v", settings.Server.Port)
+	addr := fmt.Sprintf("0.0.0.0:%v", settings.Server.Port)
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
 	// Start server in a goroutine (so we can wait for shutdown)
 	go func() {
-		log.Printf("Starting Server on %s", addr)
+		slog.Info("Server is listening", "addr", addr)
 		if err := chiServer.Start(addr); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("Server failed: %v", err)
+			slog.Error("Server failed to start", "error", err)
+			os.Exit(1)
 		}
 	}()
 
 	<-shutdown
 
-	log.Println("Shutting down server...")
+	slog.Info("Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := chiServer.Shutdown(ctx); err != nil {
-		log.Fatalf("Server Shutdown Failed: %+v", err)
+		slog.Error("Server shutdown failed", "error", err)
+		os.Exit(1)
 	}
 
-	log.Println("Server exited properly")
+	slog.Info("Server exited properly")
 }

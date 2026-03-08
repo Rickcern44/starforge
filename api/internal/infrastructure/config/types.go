@@ -3,9 +3,9 @@ package config
 type Config struct {
 	AppEnv        string `env:"APP_ENV" envDefault:"development"`
 	IsDevelopment bool
-	Server        *ServerConfig
-	Database      *DatabaseConfig
-	Auth          *AuthConfig
+	Server        *ServerConfig   `env:",expandMask"`
+	Database      *DatabaseConfig `env:",expandMask"`
+	Auth          *AuthConfig     `env:",expandMask"`
 }
 
 type ServerConfig struct {
