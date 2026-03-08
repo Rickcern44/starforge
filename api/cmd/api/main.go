@@ -39,8 +39,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_ = dbServer.UpdateDatabase()
-	_ = dbServer.Seed()
+	if settings.IsDevelopment {
+		_ = dbServer.UpdateDatabase()
+		_ = dbServer.Seed()
+	}
+
 
 	app := container.NewAppContainer(dbServer.Database, settings)
 	routes.RegisterRoutes(chiServer.Router(), app.ToDependencies())

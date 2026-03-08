@@ -24,6 +24,26 @@ Here is a list of suggested tasks to improve the codebase, categorized for clari
 
 ---
 
+## Configuration
+
+The API is configured exclusively via environment variables. For local development, it supports loading variables from a `.env` file in the root of the `api` directory.
+
+### Hierarchy
+1.  **Environment Variables**: Highest priority (overrides everything).
+2.  **`.env` File**: Loaded into environment variables if present.
+3.  **Defaults**: Hardcoded fallback values defined in `internal/infrastructure/config/types.go`.
+
+### Key Environment Variables
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `PORT` | Server listening port | `3000` |
+| `DATABASE_URL` | Full PostgreSQL connection string (DSN). | `postgres://postgres:password@localhost:5432/bouncy?sslmode=disable` |
+| `JWT_SECRET` | Secret for signing JWTs | `super-secret` |
+| `JWT_REFRESH_SECRET` | Secret for refresh tokens | `refresh-secret` |
+| `JWT_TTL` | JWT expiration time in seconds | `3600` |
+
+---
+
 ## Code Structure
 
 This project follows a [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) pattern. The code is organized into:
