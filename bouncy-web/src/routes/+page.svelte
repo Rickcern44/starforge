@@ -1,5 +1,6 @@
 <script lang="ts">
   import { authService } from '$lib/services/auth.svelte';
+  import { featureFlagService } from '$lib/services/feature-flag.svelte';
   import type { League, Game } from '$lib/models';
   import { goto } from '$app/navigation';
   import { 
@@ -87,7 +88,9 @@
 
   let canCreateEvent = $derived.by(() => {
     if (!user) return false;
-    for (const league of allLeagues) {
+    if (user.roles?.includes('admin')) return true;
+    
+    for (const league of (data.leagues || [])) {
       if (league.members) {
         for (const member of league.members) {
           if (member.playerId === user.id) {
@@ -117,7 +120,56 @@
       </button>
     </header>
 
+    {#if user && (user.roles?.includes('admin') || managedLeagues.length > 0)}
+      <section class="space-y-4 px-1">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xs font-black uppercase tracking-widest opacity-40">Quick Management</h3>
+          <button class="btn btn-link btn-xs no-underline hover:no-underline font-black uppercase tracking-widest text-[9px] opacity-40 hover:opacity-100" onclick={() => goto('/manage')}>See All</button>
+        </div>
+        <div class="flex space-x-3 overflow-x-auto pb-2 no-scrollbar -mx-1 px-1">
+          {#if user.roles?.includes('admin')}
+            <button
+              class="flex-shrink-0 w-48 p-4 bg-neutral text-neutral-content rounded-[22px] hover:opacity-90 shadow-lg active:scale-[0.98] transition-all group border-none text-left"
+              onclick={() => goto('/manage')}
+            >
+              <div class="bg-white/10 w-10 h-10 rounded-xl flex items-center justify-center mb-3">
+                <SlidersHorizontal size={20} />
+              </div>
+              <p class="font-bold text-sm leading-tight">System Portal</p>
+              <p class="text-[9px] font-black opacity-40 uppercase tracking-widest mt-1">Platform Control</p>
+            </button>
+          {/if}
+          
+          {#each managedLeagues as league}
+            <button
+              class="flex-shrink-0 w-48 p-4 bg-base-100 border border-base-300 rounded-[22px] hover:border-neutral shadow-sm active:scale-[0.98] transition-all group text-left"
+              onclick={() => goto(`/leagues/${league.id}/admin`)}
+            >
+              <div class="bg-base-200 w-10 h-10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-neutral group-hover:text-neutral-content transition-colors">
+                <Settings size={20} />
+              </div>
+              <p class="font-bold text-sm leading-tight truncate">{league.name}</p>
+              <p class="text-[9px] font-black opacity-40 uppercase tracking-widest mt-1">League Admin</p>
+            </button>
+          {/each}
+
+          {#if featureFlagService.isEnabled('league_creation')}
+          <button
+            class="flex-shrink-0 w-48 p-4 bg-base-100 border-2 border-dashed border-base-300 rounded-[22px] hover:border-neutral active:scale-[0.98] transition-all group flex flex-col items-center justify-center text-center space-y-2"
+            onclick={() => goto('/leagues/create')}
+          >
+            <div class="w-10 h-10 rounded-full bg-base-200 flex items-center justify-center group-hover:bg-neutral group-hover:text-neutral-content transition-colors">
+              <Plus size={20} />
+            </div>
+            <p class="font-black text-[10px] uppercase tracking-widest opacity-40">New League</p>
+          </button>
+          {/if}
+        </div>
+      </section>
+    {/if}
+
     <!-- Financial Summary (DaisyUI Card) -->
+    {#if featureFlagService.isEnabled('payments')}
     <button 
       class="card w-full bg-neutral text-neutral-content shadow-2xl shadow-neutral/20 cursor-pointer hover:opacity-90 transition-all duration-300 relative overflow-hidden group border-none text-left" 
       onclick={() => goto('/ledger')}
@@ -145,69 +197,6 @@
         </div>
       </div>
     </button>
-
-    <!-- Managed Leagues Section -->
-    {#if managedLeagues.length > 0}
-      <section class="space-y-4 px-1">
-        <h3 class="text-xs font-black uppercase tracking-widest opacity-40">Admin Dashboard</h3>
-        <div class="grid grid-cols-1 gap-3">
-          {#each managedLeagues as league}
-            <button
-              class="flex items-center justify-between p-4 bg-base-100 border border-base-300 rounded-[22px] hover:border-neutral shadow-sm active:scale-[0.98] transition-all group"
-              onclick={() => goto(`/leagues/${league.id}/admin`)}
-            >
-              <div class="flex items-center space-x-4">
-                <div class="bg-base-200 p-2.5 rounded-xl text-base-content/60 group-hover:bg-neutral group-hover:text-neutral-content transition-colors">
-                  <Settings size={20} />
-                </div>
-                <div class="text-left">
-                  <p class="font-bold leading-tight">{league.name}</p>
-                  <p class="text-[10px] font-black opacity-40 uppercase tracking-widest mt-0.5">Settings & Finances</p>
-                </div>
-              </div>
-              <div class="w-8 h-8 rounded-full bg-base-200 flex items-center justify-center group-hover:bg-neutral group-hover:text-neutral-content transition-all">
-                <ChevronRight size={14} strokeWidth={3} />
-              </div>
-            </button>
-          {/each}
-        </div>
-      </section>
-    {/if}
-
-    <!-- Global Admin Portal -->
-    {#if user && user.roles.includes('admin')}
-      <section class="space-y-4 px-1">
-        <h3 class="text-xs font-black uppercase tracking-widest opacity-40">System Administration</h3>
-        <div class="grid grid-cols-1 gap-3">
-          <button
-            class="flex items-center justify-between p-4 bg-neutral text-neutral-content rounded-[22px] hover:opacity-90 shadow-xl active:scale-[0.98] transition-all group border-none"
-            onclick={() => goto('/admin/features')}
-          >
-            <div class="flex items-center space-x-4">
-              <div class="bg-white/10 p-2.5 rounded-xl text-white">
-                <SlidersHorizontal size={20} />
-              </div>
-              <div class="text-left">
-                <p class="font-bold leading-tight">Platform Features</p>
-                <p class="text-[10px] font-black opacity-40 uppercase tracking-widest mt-0.5 text-neutral-content">Toggle System Functionality</p>
-              </div>
-            </div>
-            <ChevronRight size={16} strokeWidth={3} class="opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-          </button>
-        </div>
-      </section>
-    {/if}
-
-    {#if user && (user.roles.includes('league_creator') || user.roles.includes('admin'))}
-       <section class="space-y-4 px-1">
-          <button 
-            class="btn btn-outline btn-neutral btn-block rounded-[22px] border-2 border-dashed h-auto py-4 group"
-            onclick={() => goto('/leagues/create')}
-          >
-            <Plus size={20} />
-            <span class="font-black uppercase tracking-widest text-xs">Create New League</span>
-          </button>
-       </section>
     {/if}
 
     <!-- League Selector -->

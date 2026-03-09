@@ -3,15 +3,28 @@
   import { goto } from '$app/navigation';
   import { LayoutGrid, Shield, Users, Trophy } from 'lucide-svelte';
 
-  let { children } = $props();
-  
-  const tabs = [
-    { id: 'leagues', name: 'Leagues', icon: Trophy, path: '/manage/leagues' },
-    { id: 'platform', name: 'Platform', icon: Shield, path: '/manage/platform' },
-    { id: 'users', name: 'Users', icon: Users, path: '/manage/users' }
-  ];
+  import { authService } from '$lib/services/auth.svelte';
 
-  let currentTab = $derived(page.url.pathname.split('/')[2] || 'leagues');
+  let { children } = $props();
+  let user = $derived(authService.user);
+  
+  const tabs = $derived.by(() => {
+    const baseTabs = [
+      { id: 'overview', name: 'Overview', icon: LayoutGrid, path: '/manage' },
+      { id: 'leagues', name: 'Leagues', icon: Trophy, path: '/manage/leagues' }
+    ];
+
+    if (user?.roles?.includes('admin')) {
+      baseTabs.push(
+        { id: 'platform', name: 'Platform', icon: Shield, path: '/manage/platform' },
+        { id: 'users', name: 'Users', icon: Users, path: '/manage/users' }
+      );
+    }
+
+    return baseTabs;
+  });
+
+  let currentTab = $derived(page.url.pathname.split('/')[2] || 'overview');
 </script>
 
 <div class="max-w-6xl mx-auto py-8 px-4 space-y-8">

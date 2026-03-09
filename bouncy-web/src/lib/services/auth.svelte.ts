@@ -96,6 +96,16 @@ class AuthService {
     }
   }
 
+  async inviteLeagueCreator(email: string): Promise<boolean> {
+    try {
+      await api.post('admin/platform/invite-creator', { email });
+      return true;
+    } catch (error) {
+      console.error('Invite league creator error:', error);
+      return false;
+    }
+  }
+
   logout() {
     this.token = null;
     api.setToken(null);

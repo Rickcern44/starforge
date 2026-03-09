@@ -3,6 +3,7 @@
   import { addPayment, addAllocation } from '$lib/services/payment';
   import type { League, Payment, Game, GameCharge, Invitation } from '$lib/models';
   import { authService } from '$lib/services/auth.svelte';
+  import { featureFlagService } from '$lib/services/feature-flag.svelte';
   import { toastService } from '$lib/services/toast.svelte';
   import { 
     ChevronLeft, 
@@ -23,6 +24,14 @@
   let invitations = $state<Invitation[]>(data.invitations || []);
   let financialSummary = $derived(data.financialSummary);
   let activeTab = $state<'overview' | 'members' | 'payments'>('overview');
+
+  let availableTabs = $derived.by(() => {
+    const tabs = ['overview', 'members'];
+    if (featureFlagService.isEnabled('payments')) {
+      tabs.push('payments');
+    }
+    return tabs;
+  });
 
   // Member management
   let inviteEmail = $state('');
@@ -175,7 +184,7 @@
 
   <!-- Tabs -->
   <div class="flex border-b border-base-300 overflow-x-auto no-scrollbar whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0">
-    {#each ['overview', 'members', 'payments'] as tab}
+    {#each availableTabs as tab}
       <button
         class="px-6 py-3 text-xs sm:text-sm font-black uppercase tracking-widest transition-all duration-200 border-b-2 -mb-[2px] flex-shrink-0"
         class:border-neutral={activeTab === tab}
@@ -197,6 +206,7 @@
           <div class="stat-title text-[10px] font-black uppercase tracking-widest">Members</div>
           <div class="stat-value text-3xl font-black">{league.members.length}</div>
         </div>
+        {#if featureFlagService.isEnabled('payments')}
         <div class="stat">
           <div class="stat-figure text-success opacity-20"><TrendingUp size={24} /></div>
           <div class="stat-title text-[10px] font-black uppercase tracking-widest">Collected</div>
@@ -212,8 +222,10 @@
           <div class="stat-title text-[10px] font-black uppercase tracking-widest">Balance</div>
           <div class="stat-value text-3xl font-black text-primary">${((financialSummary?.totalAvailable || 0) / 100).toFixed(2)}</div>
         </div>
+        {/if}
       </div>
 
+      {#if featureFlagService.isEnabled('payments')}
       <section class="space-y-3">
         <h3 class="text-xs font-black opacity-40 uppercase tracking-widest px-1">Treasurer Overview</h3>
         <div class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden rounded-[32px]">
@@ -251,11 +263,13 @@
           </div>
         </div>
       </section>
+      {/if}
     </div>
   {/if}
 
   {#if activeTab === 'members'}
     <section class="space-y-6">
+      {#if featureFlagService.isEnabled('admin_invites')}
       <div class="card bg-base-100 p-8 rounded-[32px] border border-base-300 shadow-sm space-y-4">
         <h3 class="text-xl font-black">Invite New Member</h3>
         <div class="join w-full">
@@ -279,6 +293,7 @@
           </button>
         </div>
       </div>
+      {/if}
 
       {#if invitations.length > 0}
         <div class="space-y-3">

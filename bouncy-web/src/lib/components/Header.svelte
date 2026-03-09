@@ -18,10 +18,9 @@
 <header class="navbar bg-base-100 border-b border-base-300 sticky top-0 z-40 backdrop-blur-md bg-base-100/80">
   <div class="flex-1">
     <a href="/" class="btn btn-ghost group gap-2 px-2 sm:px-4">
-      <div class="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden group-active:scale-95 transition-transform">
-        <img src={logo} alt="Bouncy Logo" class="w-full h-full object-contain" />
+      <div class="h-10 flex items-center justify-center overflow-hidden group-active:scale-95 transition-transform">
+        <img src={logo} alt="Bouncy" class="h-full w-auto object-contain dark:invert" />
       </div>
-      <span class="text-xl font-black tracking-tight hidden sm:inline-block">Bouncy</span>
     </a>
   </div>
   
@@ -51,17 +50,19 @@
               Dashboard
             </button>
           </li>
+          {#if featureFlagService.isEnabled('payments')}
           <li>
             <button onclick={() => goto('/ledger')} class="py-3">
               <Wallet size={16} />
               My Wallet
             </button>
           </li>
-          {#if user.roles?.includes('admin')}
+          {/if}
+          {#if user.roles?.includes('admin') || user.roles?.includes('league_creator')}
           <li>
-            <button onclick={() => goto('/manage/leagues')} class="py-3 text-primary font-black">
+            <button onclick={() => goto('/manage')} class="py-3 text-primary font-black">
               <Shield size={16} />
-              Platform Manage
+              Management Portal
             </button>
           </li>
           {/if}

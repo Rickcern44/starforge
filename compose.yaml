@@ -24,7 +24,7 @@ services:
       context: ./api
       dockerfile: Dockerfile
     environment:
-      - APP_ENV=local
+      - APP_ENV=development
       - PORT=3000
       - DATABASE_URL=postgres://postgres:password@db:5432/bouncy?sslmode=disable
       - JWT_SECRET=change-me-in-production
