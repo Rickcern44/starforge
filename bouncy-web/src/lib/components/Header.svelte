@@ -1,7 +1,11 @@
 <script lang="ts">
   import { authService } from '$lib/services/auth.svelte';
+  import { featureFlagService } from '$lib/services/feature-flag.svelte';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
+  import ThemeToggle from './ThemeToggle.svelte';
+  import { Trophy, Wallet, LayoutDashboard, LogOut, Bell, Shield } from 'lucide-svelte';
+  import logo from '$lib/assets/logo.png';
 
   let user = $derived(authService.user);
 
@@ -11,40 +15,70 @@
   }
 </script>
 
-<header class="bg-white border-b border-gray-100 sticky top-0 z-40 backdrop-blur-md bg-white/80">
-  <nav class="container mx-auto px-4 py-3 flex justify-between items-center h-16">
-    <a href="/" class="flex items-center space-x-2 group">
-      <div class="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 group-active:scale-95 transition-transform">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
-        </svg>
+<header class="navbar bg-base-100 border-b border-base-300 sticky top-0 z-40 backdrop-blur-md bg-base-100/80">
+  <div class="flex-1">
+    <a href="/" class="btn btn-ghost group gap-2 px-2 sm:px-4">
+      <div class="h-10 flex items-center justify-center overflow-hidden group-active:scale-95 transition-transform">
+        <img src={logo} alt="Bouncy" class="h-full w-auto object-contain dark:invert" />
       </div>
-      <span class="text-xl font-black tracking-tight text-gray-900 group-hover:text-indigo-600 transition-colors">Bouncy</span>
     </a>
-    <div class="flex items-center space-x-2">
-      {#if user}
-        <div class="flex items-center space-x-3">
-          <div class="hidden sm:block text-right">
-            <p class="text-xs font-bold text-gray-900 leading-none">{user.name}</p>
-            <button 
-              onclick={handleLogout} 
-              class="text-[10px] font-black text-gray-400 hover:text-red-500 uppercase tracking-widest transition-colors"
-            >
+  </div>
+  
+  <div class="flex-none gap-2 px-2">
+    {#if user && featureFlagService.isEnabled('notifications')}
+      <button class="btn btn-ghost btn-circle">
+        <div class="indicator">
+          <Bell size={20} />
+          <span class="badge badge-xs badge-primary indicator-item"></span>
+        </div>
+      </button>
+    {/if}
+
+    <ThemeToggle />
+    {#if user}
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar border border-base-300">
+          <div class="w-10 rounded-xl bg-base-200 text-base-content flex items-center justify-center font-black">
+             {user?.name?.charAt(0) || 'U'}
+          </div>
+        </div>
+        <ul tabindex="0" class="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-300">
+          <li class="menu-title text-[10px] font-black uppercase opacity-40 px-4 py-2 border-b border-base-300 mb-1">{user.name}</li>
+          <li>
+            <button onclick={() => goto('/')} class="py-3">
+              <LayoutDashboard size={16} />
+              Dashboard
+            </button>
+          </li>
+          {#if featureFlagService.isEnabled('payments')}
+          <li>
+            <button onclick={() => goto('/ledger')} class="py-3">
+              <Wallet size={16} />
+              My Wallet
+            </button>
+          </li>
+          {/if}
+          {#if user.roles?.includes('admin') || user.roles?.includes('league_creator')}
+          <li>
+            <button onclick={() => goto('/manage')} class="py-3 text-primary font-black">
+              <Shield size={16} />
+              Management Portal
+            </button>
+          </li>
+          {/if}
+          <div class="divider my-0"></div>
+          <li>
+            <button onclick={handleLogout} class="text-error py-3">
+              <LogOut size={16} />
               Sign Out
             </button>
-          </div>
-          <button 
-            onclick={() => goto('/auth/logout')}
-            class="h-10 w-10 rounded-2xl bg-indigo-50 border-2 border-white shadow-sm flex items-center justify-center text-indigo-600 font-black text-sm uppercase ring-1 ring-indigo-100 group active:scale-95 transition-all"
-          >
-            {user?.name?.charAt(0) || 'U'}
-          </button>
-        </div>
-      {:else if !page.url.pathname.startsWith('/auth')}
-        <a href="/auth/login" class="px-4 py-2 bg-indigo-600 text-white text-sm font-black rounded-xl shadow-lg shadow-indigo-100 active:scale-95 transition-all">
-          Sign In
-        </a>
-      {/if}
-    </div>
-  </nav>
+          </li>
+        </ul>
+      </div>
+    {:else if !page.url.pathname.startsWith('/auth')}
+      <a href="/auth/login" class="btn btn-primary btn-sm rounded-xl font-black uppercase tracking-widest px-6">
+        Sign In
+      </a>
+    {/if}
+  </div>
 </header>

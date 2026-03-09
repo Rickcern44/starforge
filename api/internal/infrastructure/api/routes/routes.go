@@ -31,14 +31,13 @@ func RegisterRoutes(
 			handlers.RegisterUserRoutes(r, deps.UserHandler)
 			handlers.RegisterGameAttendanceRoutes(r, deps.GameAttendanceHandler)
 			handlers.RegisterUserPaymentsRoutes(r, deps.PaymentsHandler)
-			handlers.RegisterAdminAuthRoutes(r, deps.AuthHandler)
-			handlers.RegisterPaymentsRoutes(r, deps.PaymentsHandler)
-
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.RoleMiddleware("admin"))
 				// Admin-protected user routes
 				r.Group(func(r chi.Router) {
 					handlers.RegisterAdminUserRoutes(r, deps.UserHandler)
+					handlers.RegisterFeatureFlagRoutes(r, deps.FeatureFlagHandler)
+					handlers.RegisterAdminAuthRoutes(r, deps.AuthHandler)
 				})
 			})
 		})

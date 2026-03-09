@@ -30,7 +30,7 @@ func RoleMiddleware(requiredRole string) func(next http.Handler) http.Handler {
 
 func hasRole(userRoles []string, requiredRole string) bool {
 	for _, role := range userRoles {
-		if role == requiredRole {
+		if role == "admin" || role == requiredRole {
 			return true
 		}
 	}

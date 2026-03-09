@@ -40,3 +40,13 @@ export async function getLeagueInvitations(leagueId: string, fetch?: api.Fetch, 
     return [];
   }
 }
+
+export async function createLeague(name: string): Promise<League | null> {
+  try {
+    const league = await api.post('league', { name });
+    return league as League;
+  } catch (error) {
+    console.error('Error creating league:', error);
+    return null;
+  }
+}

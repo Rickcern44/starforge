@@ -148,7 +148,7 @@ var syncAllCommand = &cobra.Command{
 						status = "CLAIMED"
 					}
 				}
-				fmt.Printf(" - [%s] %s: Amount $%.2f\n", status, displayName, float64(p.AmountInCents)/100.0)
+				fmt.Printf(" - [%s] %s: Amount $%.2f\n", status, displayName, float64(p.AmountCents)/100.0)
 			}
 			fmt.Println("--------------------")
 

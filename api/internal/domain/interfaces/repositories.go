@@ -63,3 +63,11 @@ type UserRepository interface {
 	GetInvitationsByLeague(leagueID string) ([]models.Invitation, error)
 	MarkInvitationAsUsed(token string, usedAt time.Time) error
 }
+
+type FeatureFlagRepository interface {
+	GetAll() ([]models.FeatureFlag, error)
+	GetByKey(key string) (*models.FeatureFlag, error)
+	Update(key string, enabled bool) error
+	Create(flag *models.FeatureFlag) error
+	Delete(key string) error
+}

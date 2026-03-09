@@ -69,3 +69,9 @@ export function get(path: string, customFetch?: Fetch, tokenOverride?: string | 
 export function post(path: string, data: any, customFetch?: Fetch, tokenOverride?: string | null) {
   return request('POST', path, data, customFetch, tokenOverride);
 }
+
+export function patch(path: string, data: any, customFetch?: Fetch, tokenOverride?: string | null) {
+  return request('PATCH', path, data, customFetch, tokenOverride);
+}
+
+export { request };

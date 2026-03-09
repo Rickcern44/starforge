@@ -5,6 +5,7 @@ export interface GameCharge {
   id: string;
   gameId: string;
   userId: string;
+  externalName?: string;
   amountCents: number;
   createdAt: Date;
   allocations: PaymentAllocation[];

@@ -7,3 +7,4 @@ export * from './league';
 export * from './payment';
 export * from './payment-allocation';
 export * from './user';
+export * from './feature-flag';

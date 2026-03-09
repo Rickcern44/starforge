@@ -27,16 +27,16 @@
   });
 </script>
 
-<div class="min-h-screen bg-gray-100">
+<div class="min-h-screen bg-base-200 text-base-content transition-colors duration-300">
   <Toaster />
   {#if authService.user || page.url.pathname.startsWith('/auth') || page.url.pathname === '/'}
     <Header />
-    <main class="container mx-auto p-4">
+    <main class="container mx-auto p-4 max-w-full overflow-x-hidden">
       {@render children()}
     </main>
   {:else}
     <div class="flex justify-center items-center h-screen">
-      <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      <span class="loading loading-spinner loading-lg text-primary"></span>
     </div>
   {/if}
 </div>

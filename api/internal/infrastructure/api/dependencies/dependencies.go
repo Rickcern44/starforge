@@ -4,6 +4,7 @@ import (
 	"net/http" // New import for http.Handler
 
 	"github.com/bouncy/bouncy-api/internal/application"
+	"github.com/bouncy/bouncy-api/internal/application/features"
 	"github.com/bouncy/bouncy-api/internal/application/game_attendances"
 	"github.com/bouncy/bouncy-api/internal/application/leagues"
 	"github.com/bouncy/bouncy-api/internal/application/payments"
@@ -20,6 +21,7 @@ type Dependencies struct {
 	UserHandler           *handlers.UserHandler
 	GameAttendanceHandler *handlers.GameAttendanceHandler
 	PaymentsHandler       *handlers.PaymentsHandler
+	FeatureFlagHandler    *handlers.FeatureFlagHandler
 	AuthMiddleware        func(next http.Handler) http.Handler
 }
 
@@ -32,15 +34,17 @@ func BuildDependencies(
 	userService *users.Service,
 	gameAttendanceService *game_attendances.Service,
 	paymentsService *payments.Service,
+	featureFlagService *features.FeatureFlagService,
 ) *Dependencies {
 	return &Dependencies{
-		LeagueHandler:         handlers.NewLeagueHandler(leagueService),
+		LeagueHandler:         handlers.NewLeagueHandler(leagueService, featureFlagService),
 		LeagueMemberHandler:   handlers.NewLeagueMemberHandler(leagueMemberService),
 		GameHandler:           handlers.NewGameHandler(gameService),
 		AuthHandler:           handlers.NewAuthHandler(authService),
 		UserHandler:           handlers.NewUserHandler(userService),
 		GameAttendanceHandler: handlers.NewGameAttendanceHandler(gameAttendanceService),
 		PaymentsHandler:       handlers.NewPaymentsHandler(paymentsService),
+		FeatureFlagHandler:    handlers.NewFeatureFlagHandler(featureFlagService),
 		AuthMiddleware:        middleware.AuthMiddleware(jwtService),
 	}
 }
