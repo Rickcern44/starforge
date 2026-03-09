@@ -37,75 +37,81 @@
   <title>Login | League Manager</title>
 </svelte:head>
 
-<div class="flex items-center justify-center min-h-screen">
-  <div class="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg">
-    <div class="text-center">
-      <h2 class="text-3xl font-extrabold text-gray-900">
-        Welcome Back!
-      </h2>
-      <p class="mt-2 text-sm text-gray-600">
-        Sign in to continue to League Manager
-      </p>
-    </div>
+<div class="flex items-center justify-center min-h-[calc(100vh-80px)]">
+  <div class="card w-full max-w-md bg-base-100 shadow-xl border border-base-200">
+    <div class="card-body p-8 space-y-6">
+      <div class="text-center">
+        <h2 class="text-3xl font-black tracking-tight">
+          Welcome Back!
+        </h2>
+        <p class="mt-2 text-sm opacity-60 font-bold uppercase tracking-wider">
+          Sign in to your account
+        </p>
+      </div>
 
-    <form class="mt-8 space-y-6" onsubmit={handleLogin}>
-      <div class="space-y-4 rounded-md shadow-sm">
-        <div>
-          <label for="email-address" class="sr-only">Email address</label>
+      <form class="space-y-4" onsubmit={handleLogin}>
+        <div class="form-control w-full">
+          <label class="label" for="email-address">
+            <span class="label-text text-[10px] font-black uppercase tracking-widest opacity-40">Email address</span>
+          </label>
           <input
             id="email-address"
             name="email"
             type="email"
             bind:value={email}
             required
-            class="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-            placeholder="Email address"
+            class="input input-bordered focus:outline-none w-full"
+            placeholder="name@example.com"
           />
         </div>
-        <div>
-          <label for="password" class="sr-only">Password</label>
+        
+        <div class="form-control w-full">
+          <label class="label" for="password">
+            <span class="label-text text-[10px] font-black uppercase tracking-widest opacity-40">Password</span>
+          </label>
           <input
             id="password"
             name="password"
             type="password"
             bind:value={password}
             required
-            class="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-            placeholder="Password"
+            class="input input-bordered focus:outline-none w-full"
+            placeholder="••••••••"
           />
         </div>
-      </div>
 
-      {#if errorMessage}
-        <p class="text-sm text-red-600">{errorMessage}</p>
-      {/if}
+        {#if errorMessage}
+          <div class="alert alert-error text-xs font-bold py-2 rounded-xl border-none">
+            {errorMessage}
+          </div>
+        {/if}
 
-      <div class="flex items-center justify-between">
-        <div class="text-sm">
-          <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500 cursor-not-allowed" onclick={(e) => { e.preventDefault(); alert('Password recovery is coming soon!'); }}>
-            Forgot your password?
-          </a>
+        <div class="flex items-center justify-between pt-2">
+          <button class="btn btn-link btn-xs no-underline hover:no-underline font-black uppercase tracking-widest opacity-40" onclick={(e) => { e.preventDefault(); alert('Password recovery is coming soon!'); }}>
+            Forgot password?
+          </button>
         </div>
-      </div>
 
-      <div>
-        <button
-          type="submit"
-          class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          disabled={isLoading}
-        >
-          {#if isLoading}
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          {/if}
-          {isLoading ? 'Signing in...' : 'Sign in'}
-        </button>
+        <div class="pt-4">
+          <button
+            type="submit"
+            class="btn btn-primary btn-block font-black uppercase tracking-widest shadow-lg shadow-primary/20 h-auto py-4"
+            disabled={isLoading}
+          >
+            {#if isLoading}
+              <span class="loading loading-spinner"></span>
+            {/if}
+            {isLoading ? 'Signing in...' : 'Sign in'}
+          </button>
+        </div>
+      </form>
+      
+      <div class="divider text-[10px] font-black uppercase tracking-widest opacity-20">or</div>
+      
+      <div class="text-sm text-center">
+          <p class="font-bold opacity-60 uppercase tracking-widest text-[10px]">New to Bouncy?</p>
+          <a href="/auth/register" class="btn btn-ghost btn-sm btn-block mt-2 font-black uppercase tracking-widest">Create an Account</a>
       </div>
-    </form>
-    <div class="text-sm text-center">
-        <p>Don't have an account? <a href="/auth/register" class="font-medium text-indigo-600 hover:text-indigo-500">Sign up</a></p>
     </div>
   </div>
 </div>

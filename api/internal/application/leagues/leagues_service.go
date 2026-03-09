@@ -23,16 +23,22 @@ func (ls *LeagueService) GetLeague(leagueId string) (*models.League, error) {
 	return ls.leagueRepo.GetById(leagueId)
 }
 
-func (ls *LeagueService) CreateLeague(ctx context.Context, name string) (*models.League, error) {
+func (ls *LeagueService) CreateLeague(ctx context.Context, name, userId string) (*models.League, error) {
 	id, _ := uuid.NewV7()
+	leagueId := id.String()
 
 	league := &models.League{
-		ID:       id.String(),
+		ID:       leagueId,
 		Name:     name,
 		IsActive: true,
 	}
 
 	if err := ls.leagueRepo.Save(league); err != nil {
+		return nil, err
+	}
+
+	// Add creator as owner
+	if err := ls.AddMember(leagueId, userId, models.Role("owner")); err != nil {
 		return nil, err
 	}
 

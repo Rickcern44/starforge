@@ -57,6 +57,24 @@ func (s *AuthService) Login(email, password string) (string, error) {
 	})
 }
 
+func (s *AuthService) InviteLeagueCreator(email, invitedBy string) error {
+	token := uuid.NewString()
+	inv := &models.Invitation{
+		Token:       token,
+		Email:       email,
+		LeagueID:    "platform", // Global invitation
+		InvitedBy:   invitedBy,
+		SpecialRole: "league_creator",
+		ExpiresAt:   time.Now().Add(7 * 24 * time.Hour),
+	}
+
+	if err := s.userRepo.CreateInvitation(inv); err != nil {
+		return err
+	}
+
+	return s.emailService.SendInvitation(email, token, "Bouncy Platform")
+}
+
 func (s *AuthService) InviteUser(email, leagueID, invitedBy string) error {
 	isAdmin, err := s.leagueRepo.IsAdmin(leagueID, invitedBy)
 	if err != nil {
@@ -106,7 +124,7 @@ func (s *AuthService) RegisterWithInvitation(token, name, email, password string
 		return fmt.Errorf("registration email does not match invitation")
 	}
 
-	if err := s.Register(name, email, password); err != nil {
+	if err := s.RegisterWithRoles(name, email, password, inv.SpecialRole); err != nil {
 		return err
 	}
 
@@ -123,6 +141,10 @@ func (s *AuthService) RegisterWithInvitation(token, name, email, password string
 }
 
 func (s *AuthService) Register(name, email, password string) error {
+	return s.RegisterWithRoles(name, email, password, "")
+}
+
+func (s *AuthService) RegisterWithRoles(name, email, password, specialRole string) error {
 	if err := s.ValidateLoginRequirements(email, password); err != nil {
 		return err
 	}
@@ -138,12 +160,17 @@ func (s *AuthService) Register(name, email, password string) error {
 		return errors.New("internal server error")
 	}
 
+	roles := []string{"user"}
+	if specialRole != "" {
+		roles = append(roles, specialRole)
+	}
+
 	newUser := &models.User{
 		ID:           uuid.NewString(),
 		Name:         name,
 		Email:        email,
 		PasswordHash: hashedPassword,
-		Roles:        []string{"user"},
+		Roles:        roles,
 		CreatedAt:    time.Now(),
 	}
 

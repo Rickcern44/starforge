@@ -11,7 +11,43 @@ import (
 	"gorm.io/gorm"
 )
 
+func (dbs *Service) seedFeatureFlags() {
+	flags := []persistence.FeatureFlag{
+		{
+			Key:         "league_creation",
+			Name:        "Public League Creation",
+			Description: "Allow users to create their own leagues",
+			Enabled:     false,
+		},
+		{
+			Key:         "payments",
+			Name:        "Payment Processing",
+			Description: "Enable tracking of user payments and financial summaries",
+			Enabled:     true,
+		},
+		{
+			Key:         "admin_invites",
+			Name:        "Admin Invitations",
+			Description: "Enable the admin invitation system",
+			Enabled:     true,
+		},
+	}
+
+	for _, flag := range flags {
+		var existing persistence.FeatureFlag
+		if err := dbs.Database.Where("key = ?", flag.Key).First(&existing).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				slog.Info("Seeding feature flag", "key", flag.Key)
+				_ = dbs.Database.Create(&flag).Error
+			}
+		}
+	}
+}
+
 func (dbs *Service) Seed() error {
+	// Seed Feature Flags regardless of user count (idempotent)
+	dbs.seedFeatureFlags()
+
 	var count int64
 	dbs.Database.Model(&persistence.User{}).Count(&count)
 

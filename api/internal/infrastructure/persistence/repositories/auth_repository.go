@@ -58,11 +58,12 @@ func (r *AuthRepository) UpdateUserRoles(userID string, roles []string) error {
 
 func (r *AuthRepository) CreateInvitation(inv *models.Invitation) error {
 	p := &persistence.Invitation{
-		Token:     inv.Token,
-		Email:     inv.Email,
-		LeagueID:  inv.LeagueID,
-		InvitedBy: inv.InvitedBy,
-		ExpiresAt: inv.ExpiresAt,
+		Token:       inv.Token,
+		Email:       inv.Email,
+		LeagueID:    inv.LeagueID,
+		InvitedBy:   inv.InvitedBy,
+		SpecialRole: inv.SpecialRole,
+		ExpiresAt:   inv.ExpiresAt,
 	}
 	return r.db.Create(p).Error
 }
@@ -73,12 +74,13 @@ func (r *AuthRepository) GetInvitationByToken(token string) (*models.Invitation,
 		return nil, err
 	}
 	return &models.Invitation{
-		Token:     p.Token,
-		Email:     p.Email,
-		LeagueID:  p.LeagueID,
-		InvitedBy: p.InvitedBy,
-		ExpiresAt: p.ExpiresAt,
-		UsedAt:    p.UsedAt,
+		Token:       p.Token,
+		Email:       p.Email,
+		LeagueID:    p.LeagueID,
+		InvitedBy:   p.InvitedBy,
+		SpecialRole: p.SpecialRole,
+		ExpiresAt:   p.ExpiresAt,
+		UsedAt:      p.UsedAt,
 	}, nil
 }
 

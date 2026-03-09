@@ -36,45 +36,53 @@
   <title>Register | League Manager</title>
 </svelte:head>
 
-<div class="flex items-center justify-center min-h-screen">
-  <div class="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg">
-    <div class="text-center">
-      <h2 class="text-3xl font-extrabold text-gray-900">
-        Create your account
-      </h2>
-      <p class="mt-2 text-sm text-gray-600">
-        to get started with League Manager
-      </p>
-    </div>
+<div class="flex items-center justify-center min-h-[calc(100vh-80px)] py-12">
+  <div class="card w-full max-w-md bg-base-100 shadow-xl border border-base-200">
+    <div class="card-body p-8 space-y-6">
+      <div class="text-center">
+        <h2 class="text-3xl font-black tracking-tight">
+          Join Bouncy
+        </h2>
+        <p class="mt-2 text-sm opacity-60 font-bold uppercase tracking-wider">
+          Create your player account
+        </p>
+      </div>
 
-    <form class="mt-8 space-y-6" onsubmit={handleRegister}>
-      <div class="space-y-4 rounded-md shadow-sm">
-        <div>
-          <label for="name" class="sr-only">Name</label>
+      <form class="space-y-4" onsubmit={handleRegister}>
+        <div class="form-control w-full">
+          <label class="label" for="name">
+            <span class="label-text text-[10px] font-black uppercase tracking-widest opacity-40">Full Name</span>
+          </label>
           <input
             id="name"
             name="name"
             type="text"
             bind:value={name}
             required
-            class="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="Your Name"
+            class="input input-bordered focus:outline-none w-full"
+            placeholder="John Doe"
           />
         </div>
-        <div>
-          <label for="email-address" class="sr-only">Email address</label>
+
+        <div class="form-control w-full">
+          <label class="label" for="email-address">
+            <span class="label-text text-[10px] font-black uppercase tracking-widest opacity-40">Email address</span>
+          </label>
           <input
             id="email-address"
             name="email"
             type="email"
             bind:value={email}
             required
-            class="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="Email address"
+            class="input input-bordered focus:outline-none w-full"
+            placeholder="name@example.com"
           />
         </div>
-        <div>
-          <label for="password" class="sr-only">Password</label>
+        
+        <div class="form-control w-full">
+          <label class="label" for="password">
+            <span class="label-text text-[10px] font-black uppercase tracking-widest opacity-40">Password</span>
+          </label>
           <input
             id="password"
             name="password"
@@ -82,46 +90,52 @@
             bind:value={password}
             required
             minlength="8"
-            class="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="Password"
+            class="input input-bordered focus:outline-none w-full"
+            placeholder="••••••••"
           />
         </div>
-        <div>
-          <label for="confirm-password" class="sr-only">Confirm Password</label>
+
+        <div class="form-control w-full">
+          <label class="label" for="confirm-password">
+            <span class="label-text text-[10px] font-black uppercase tracking-widest opacity-40">Confirm Password</span>
+          </label>
           <input
             id="confirm-password"
             name="confirm-password"
             type="password"
             bind:value={confirmPassword}
             required
-            class="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="Confirm Password"
+            class="input input-bordered focus:outline-none w-full"
+            placeholder="••••••••"
           />
         </div>
-      </div>
 
-      {#if errorMessage}
-        <p class="text-sm text-red-600">{errorMessage}</p>
-      {/if}
+        {#if errorMessage}
+          <div class="alert alert-error text-xs font-bold py-2 rounded-xl border-none">
+            {errorMessage}
+          </div>
+        {/if}
 
-      <div>
-        <button
-          type="submit"
-          class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          disabled={isLoading}
-        >
-          {#if isLoading}
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          {/if}
-          {isLoading ? 'Creating account...' : 'Create account'}
-        </button>
+        <div class="pt-4">
+          <button
+            type="submit"
+            class="btn btn-primary btn-block font-black uppercase tracking-widest shadow-lg shadow-primary/20 h-auto py-4"
+            disabled={isLoading}
+          >
+            {#if isLoading}
+              <span class="loading loading-spinner"></span>
+            {/if}
+            {isLoading ? 'Creating account...' : 'Create Account'}
+          </button>
+        </div>
+      </form>
+      
+      <div class="divider text-[10px] font-black uppercase tracking-widest opacity-20">or</div>
+      
+      <div class="text-sm text-center">
+          <p class="font-bold opacity-60 uppercase tracking-widest text-[10px]">Already have an account?</p>
+          <a href="/auth/login" class="btn btn-ghost btn-sm btn-block mt-2 font-black uppercase tracking-widest">Sign In Instead</a>
       </div>
-    </form>
-     <div class="text-sm text-center">
-        <p>Already have an account? <a href="/auth/login" class="font-medium text-indigo-600 hover:text-indigo-500">Log in</a></p>
     </div>
   </div>
 </div>

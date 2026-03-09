@@ -291,7 +291,7 @@ func (service *Service) IdentifyNewPayments(
 			p, err := paymentsService.ListPaymentsByUser(*userID)
 			if err == nil {
 				for _, pay := range p {
-					currentPaidInCents += pay.AmountInCents
+					currentPaidInCents += pay.AmountCents
 				}
 			}
 		}
@@ -299,7 +299,7 @@ func (service *Service) IdentifyNewPayments(
 		unclaimed, err := paymentsService.ListPaymentsByExternalName(data.Name)
 		if err == nil {
 			for _, pay := range unclaimed {
-				currentPaidInCents += pay.AmountInCents
+				currentPaidInCents += pay.AmountCents
 			}
 		}
 

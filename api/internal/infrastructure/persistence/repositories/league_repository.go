@@ -21,7 +21,14 @@ func NewLeagueRepository(db *gorm.DB) *LeagueRepository {
 
 func (lr *LeagueRepository) GetById(leagueId string) (*models.League, error) {
 	var model persistence.League
-	err := lr.db.Preload("Members.User").Preload("Games.Charges.Allocations").Preload("Games.Attendance.User").First(&model, "id = ?", leagueId).Error
+	err := lr.db.
+		Preload("Members.User").
+		Preload("Games").
+		Preload("Games.Charges").
+		Preload("Games.Charges.Allocations").
+		Preload("Games.Attendance").
+		Preload("Games.Attendance.User").
+		First(&model, "id = ?", leagueId).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -75,7 +82,10 @@ func (lr *LeagueRepository) FindLeaguesByUserID(userId string) ([]*models.League
 		Joins("JOIN league_members ON leagues.id = league_members.league_id").
 		Where("league_members.user_id = ?", userId).
 		Preload("Members.User").
+		Preload("Games").
+		Preload("Games.Charges").
 		Preload("Games.Charges.Allocations").
+		Preload("Games.Attendance").
 		Preload("Games.Attendance.User").
 		Find(&pLeagues).Error
 

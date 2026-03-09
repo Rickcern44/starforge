@@ -64,6 +64,7 @@ func (dbs *Service) UpdateDatabase() error {
 		&persistence.PaymentAllocation{},
 		&persistence.GameCharge{},
 		&persistence.Invitation{},
+		&persistence.FeatureFlag{},
 	)
 
 	if err != nil {

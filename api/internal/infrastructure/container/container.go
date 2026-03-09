@@ -2,6 +2,7 @@ package container
 
 import (
 	"github.com/bouncy/bouncy-api/internal/application"
+	"github.com/bouncy/bouncy-api/internal/application/features"
 	"github.com/bouncy/bouncy-api/internal/application/game_attendances"
 	"github.com/bouncy/bouncy-api/internal/application/leagues"
 	"github.com/bouncy/bouncy-api/internal/application/payments"
@@ -23,6 +24,7 @@ type AppContainer struct {
 	UserService           *users.Service
 	GameAttendanceService *game_attendances.Service
 	PaymentsService       *payments.Service
+	FeatureFlagService    *features.FeatureFlagService
 	JwtService            *application.JwtService
 	AuthService           *application.AuthService
 	EmailService          interfaces.EmailService
@@ -35,6 +37,7 @@ func NewAppContainer(db *gorm.DB, settings *config.Config) *AppContainer {
 	authRepo := repositories.NewAuthRepository(db)
 	gameAttendanceRepo := repositories.NewGameAttendanceRepository(db)
 	paymentsRepo := repositories.NewPaymentsRepository(db)
+	featureFlagRepo := repositories.NewFeatureFlagRepository(db)
 
 	leagueService := leagues.NewLeagueService(leagueRepo)
 	leagueMemberService := leagues.NewLeagueMemberService(leagueMemberRepo)
@@ -42,6 +45,7 @@ func NewAppContainer(db *gorm.DB, settings *config.Config) *AppContainer {
 	userService := users.NewUserService(authRepo)
 	gameAttendanceService := game_attendances.NewGameAttendanceService(gameAttendanceRepo, gameRepo, paymentsRepo)
 	paymentsService := payments.NewPaymentsService(paymentsRepo)
+	featureFlagService := features.NewFeatureFlagService(featureFlagRepo)
 
 	emailService := email.NewMockEmailService()
 
@@ -57,6 +61,7 @@ func NewAppContainer(db *gorm.DB, settings *config.Config) *AppContainer {
 		UserService:           userService,
 		GameAttendanceService: gameAttendanceService,
 		PaymentsService:       paymentsService,
+		FeatureFlagService:    featureFlagService,
 		JwtService:            jwtService,
 		AuthService:           authService,
 		EmailService:          emailService,
@@ -73,5 +78,6 @@ func (c *AppContainer) ToDependencies() *dependencies.Dependencies {
 		c.UserService,
 		c.GameAttendanceService,
 		c.PaymentsService,
+		c.FeatureFlagService,
 	)
 }

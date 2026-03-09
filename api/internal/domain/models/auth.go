@@ -12,12 +12,13 @@ type User struct {
 }
 
 type Invitation struct {
-	Token     string     `json:"token"`
-	Email     string     `json:"email"`
-	LeagueID  string     `json:"leagueId"`
-	InvitedBy string     `json:"invitedBy"`
-	ExpiresAt time.Time  `json:"expiresAt"`
-	UsedAt    *time.Time `json:"usedAt"`
+	Token       string     `json:"token"`
+	Email       string     `json:"email"`
+	LeagueID    string     `json:"leagueId"`
+	InvitedBy   string     `json:"invitedBy"`
+	SpecialRole string     `json:"specialRole,omitempty"` // Role to grant upon registration (e.g., league_creator)
+	ExpiresAt   time.Time  `json:"expiresAt"`
+	UsedAt      *time.Time `json:"usedAt"`
 }
 
 func (i Invitation) IsValid() bool {

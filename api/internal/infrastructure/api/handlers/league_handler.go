@@ -7,23 +7,32 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/bouncy/bouncy-api/internal/application/features"
 	"github.com/bouncy/bouncy-api/internal/application/leagues"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/api/contract"
+	"github.com/bouncy/bouncy-api/internal/infrastructure/api/middleware"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/auth"
 	"github.com/bouncy/bouncy-api/internal/infrastructure/utils"
 )
 
 type LeagueHandler struct {
-	service *leagues.LeagueService
+	service        *leagues.LeagueService
+	featureService *features.FeatureFlagService
 }
 
-func NewLeagueHandler(service *leagues.LeagueService) *LeagueHandler {
-	return &LeagueHandler{service: service}
+func NewLeagueHandler(service *leagues.LeagueService, featureService *features.FeatureFlagService) *LeagueHandler {
+	return &LeagueHandler{
+		service:        service,
+		featureService: featureService,
+	}
 }
 
 // RegisterLeagueRoutes registers the league related routes.
 func RegisterLeagueRoutes(r chi.Router, handler *LeagueHandler) {
-	r.Post("/league", handler.CreateLeague)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RoleMiddleware("league_creator"))
+		r.Post("/league", handler.CreateLeague)
+	})
 	r.Get("/league/{leagueId}", handler.GetLeague)
 	r.Get("/me/leagues", handler.GetLeaguesForUser)
 	r.Delete("/league/{leagueId}", handler.Delete)
@@ -101,6 +110,11 @@ type createLeagueRequest struct {
 // @Failure 500 {object} contract.ErrorResponse "Internal server error"
 // @Router /api/v1/league [post]
 func (h *LeagueHandler) CreateLeague(w http.ResponseWriter, r *http.Request) {
+	if !h.featureService.IsEnabled("league_creation") {
+		utils.WriteJSON(w, http.StatusForbidden, contract.ErrorResponse{Error: "League creation is currently disabled"})
+		return
+	}
+
 	var req createLeagueRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		slog.Error("Failed to decode create league request", "error", err)
@@ -108,9 +122,12 @@ func (h *LeagueHandler) CreateLeague(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	claims, _ := r.Context().Value(auth.ClaimsContextKey).(*auth.Claims)
+
 	league, err := h.service.CreateLeague(
 		r.Context(),
 		req.Name,
+		claims.UserId,
 	)
 	if err != nil {
 		slog.Error("Create league service failed", "name", req.Name, "error", err)

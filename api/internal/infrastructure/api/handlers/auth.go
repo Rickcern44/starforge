@@ -31,6 +31,32 @@ func RegisterAuthRoutes(r chi.Router, handler *AuthHandler) {
 func RegisterAdminAuthRoutes(r chi.Router, handler *AuthHandler) {
 	r.Post("/admin/invite", handler.InviteHandler)
 	r.Get("/admin/league/{leagueId}/invitations", handler.ListLeagueInvitationsHandler)
+	r.Post("/admin/platform/invite-creator", handler.InviteLeagueCreatorHandler)
+}
+
+func (h *AuthHandler) InviteLeagueCreatorHandler(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value(auth.ClaimsContextKey).(*auth.Claims)
+	if !ok || claims == nil {
+		slog.Error("Invite league creator failed: authentication required")
+		utils.WriteJSON(w, http.StatusUnauthorized, contract.ErrorResponse{Error: "authentication required"})
+		return
+	}
+
+	var request struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		utils.WriteJSON(w, http.StatusBadRequest, contract.ErrorResponse{Error: "Invalid request body"})
+		return
+	}
+
+	if err := h.service.InviteLeagueCreator(request.Email, claims.UserId); err != nil {
+		slog.Error("Invite league creator service failed", "error", err.Error())
+		utils.WriteJSON(w, http.StatusInternalServerError, contract.ErrorResponse{Error: "Failed to create invitation"})
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "League creator invitation sent"})
 }
 
 type LoginRequest struct {
